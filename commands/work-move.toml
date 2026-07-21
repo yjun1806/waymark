@@ -1,0 +1,19 @@
+description = "Advance a Docat issue between status folders via git mv (draft → approved → in-progress → done)"
+
+prompt = """
+Move a Docat issue to a new status by relocating its file with `git mv`. The FOLDER is the status; the `git mv` commit IS the status-change audit log.
+
+1. Identify the issue by `id` (from the user). Find its current file under `docat/**/<id>-<slug>.md`.
+
+2. Determine the target status. Forward transitions:
+   - draft → approved      — requires a human 👤 to approve the design. Confirm the user approves; this commit becomes the governance record that this exact design content was approved before build.
+   - approved → in-progress — build starts.
+   - in-progress → done     — GATE: review/tests MUST pass first. Run the review/test skill (or confirm CI green) BEFORE moving. Once in done/, the doc is FROZEN — never edit it again.
+   Backward transitions are allowed for re-work (e.g. approved → draft, in-progress → approved for re-approval after a material change).
+
+3. Run `git mv docat/<from>/<id>-<slug>.md docat/<to>/<id>-<slug>.md`. Keep the filename identical — only the folder changes (git detects the rename; history follows).
+
+4. Do NOT hand-edit any index.md — a hook regenerates it. Do NOT add or change a `status` field (there is none; the folder is the status).
+
+5. Remind the user to commit the move. If the target is done/, also cross-link: put the issue `id` in the code commit message(s) and the code SHA(s) in the issue's Decisions section (satellite mode couples the two repos by id/SHA).
+"""

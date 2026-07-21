@@ -1,0 +1,326 @@
+# Docat — 설계 문서 (DESIGN)
+
+> 제품명 **Docat**. 철학·"왜"는 [MANIFESTO.md](./MANIFESTO.md),
+> 이 문서는 **구체 설계 결정**을 담는다. 상태: v0.1 설계 중(WIP) — 결정이
+> 바뀌면 이 문서를 갱신한다.
+
+---
+
+## 0. 포지셔닝 — vs OpenSpec (어느 세금을 낼 것인가)
+
+가장 가까운 이웃은 **OpenSpec**이다. change→archive 생명주기, 위성 레포(Stores),
+델타, brownfield, 얇은 md — 상당 부분 수렴한다. OpenSpec은 **성숙하고 인기 있으며,
+그럴 만한 진짜 이유가 있다.** docat이 OpenSpec보다 "낫다"는 게 아니라, **다른
+트레이드오프**를 택한 것이다.
+
+**핵심 대칭**:
+
+> **OpenSpec은 유지비/드리프트를 감수하고 → repo 안에 읽을 수 있는 현재상태 spec을
+> 얻는다. docat은 그 spec을 포기하고 → 유지비/드리프트를 없앤다. 어느 쪽도 절대
+> 우월이 아니다 — 당신 팀이 어느 세금을 낼지의 문제다.**
+
+**OpenSpec의 진짜 강점** (docat이 포기한 것):
+- **읽을 수 있는 현재상태 spec** — 신규자가 코드를 다 안 읽고 "시스템이 뭘 하나"를
+  산문으로 파악. 많은 팀에게 "코드 읽어라"는 그 질문의 답이 아니다.
+- **자기완결·단순** — repo 하나로 끝, 외부 SSOT·페더레이션 불필요. 단순함이 곧 채택률.
+- **repo 안 합의(spec-as-contract)** — 상류 기획 규율이 약한 팀에 "코드 전 합의"를 강제.
+- **성숙·생태계** — 실제 출시·유지·다중 에이전트. docat은 아직 설계 단계다.
+
+**docat의 베팅** (OpenSpec이 감수하는 것):
+- **드리프트 부담 0** — 현재상태 spec을 안 만드니 매일 갱신·캐스케이드가 없다(§7).
+- **두 번째 진실 원천 없음** — 기획이 이미 밖(Confluence)에 있으면 복제하지 않는다.
+- **트래커 보완**(§3) · **계약=코드** · **CI 강제**(§9).
+
+| 축 | OpenSpec | docat |
+|---|---|---|
+| 현재상태 spec | **읽을 수 있게 유지**(강점) | 유지 안 함 — 드리프트 0, 대신 §7로 파생 |
+| 외부 SSOT | 불필요(자기완결·단순) | **전제** — 있으면 참조, 없으면 문서가 시점 SSOT |
+| 요구사항 | `specs/`에 재서술 | 참조 / 시점 기록 |
+| 파일/이슈 | 4개(proposal/specs/design/tasks) | 1개 융합 |
+| 폴더=상태 | 이진(active/archive) | 4단계 + 승인 게이트(§2) |
+| 트래커 | 통합 없음(단순) | 보완(미러 금지, §3) |
+| CI 강제 | 없음 | ref/contract/id 게이트(§9) |
+| 성숙도 | **출시·검증됨** | 설계 단계 |
+
+**언제 OpenSpec을 고르나**: 외부 SSOT가 없다 · repo 안에서 읽을 수 있는 현재상태
+문서를 원한다 · 상류 기획 규율이 약해 repo 안 합의가 필요하다 · 단순함·성숙함이 우선.
+
+**언제 docat을 고르나**: 기획 SSOT가 이미 밖에 두껍다(두 번째 원천을 만들기 싫다) ·
+드리프트 극혐 + 트래커 보완 문화 · 계약=코드 문화.
+
+**OpenSpec에서 훔칠 것**(재발명 금지): propose/archive UX, 델타 사고, Stores(위성)
+패턴, 다중 에이전트 지원 구조. 이 뼈대를 빌리되 **"spec 유지" 코어만 뺀다** — 그게
+docat의 유일한 근본 차이다.
+
+## 1. 핵심 모델
+
+- **이슈 1개 = 파일 1개.** 한 파일에 *왜(why) · 어떻게(how) · 무엇(what) · 결정*을
+  모두 담는다. spec/plan/task를 여러 파일로 쪼개지 않는다.
+- docat은 "프레임워크"가 아니라 **얇은 규약 + 강제 훅 + 스킬**이다.
+
+## 2. 폴더 = 상태 (핵심 결정)
+
+```
+docat/
+├── draft/           # 설계 중 (에이전트/사람이 문서 작성)
+├── approved/        # 👤 사람이 "해도되겠다" 승인 — 에이전트 착수 대기
+├── in-progress/     # 에이전트 빌드 중 = "지금 살아있는 것"(현재에 가장 가까움)
+└── done/            # 완료·배포 = 동결·불변 (archive 역할)
+```
+
+- **파일이 있는 폴더가 곧 그 이슈의 상태다.** 이슈 1개 = 파일 1개가 폴더 사이를
+  **`git mv`로 이동**한다(복제 아님, 히스토리는 `--follow`로 이어짐). §1 참조.
+- **frontmatter에 `status` 필드를 두지 않는다** — 상태의 유일한 소스는 폴더.
+- **리뷰는 폴더가 아니라 게이트다.** 리뷰/테스트가 "스킬 실행"처럼 순간적이면
+  일이 머물지 않으므로 폴더 자격 미달 → `in-progress → done` **이동의 관문**으로
+  둔다(리뷰·테스트 통과해야 이동, 훅이 강제). 실제로 시간이 걸리고 되돌아오는
+  (bounce-back) QA 기간이 있으면 그때만 `verifying/` 폴더를 추가한다(YAGNI).
+  → **폴더 자격 시험**: 일이 *머무는가* + *다른 액터를 기다리는가* + *되돌아올 수
+  있는가*. 셋 다면 폴더, 아니면 게이트.
+
+### `git mv` = 거버넌스 로그 (에이전트 개발의 핵심 이점)
+
+- `git mv draft/ approved/` 커밋 = **"사람이 이 설계(이 시점 문서 내용)를 승인했다"**는
+  **내용 스냅샷 박힌 불변 기록**. 에이전트가 승인된 설계로 지었다는 증거가 git에 남는다.
+  트래커의 상태변경(메타데이터, 내용 스냅샷 없음)은 이걸 못 준다.
+- 이동은 **에이전트 스킬이 자동 수행**(완료 시 이동)해 "잊어버린 mv"를 방지 — 사람
+  규율이 아니라 파이프라인의 일부.
+
+### 동결은 오직 `done`에서만
+
+- `draft`~`in-progress`의 문서는 **live** — 리뷰 중 변경사항이 문서에 그대로 반영된다.
+- `done`으로 이동 = **동결**. 이후 손대지 않는다.
+- 승인 후 중대 변경이 생기면 문서를 고치지 말고 **`approved`로 되돌려 재승인**.
+- **liveness 경계**: `done` 여부 하나뿐. 현재-상태 파생(§7)이 의존하는 유일한 경계.
+
+### 파일 정체성 = 경로가 아니라 `id`
+
+- 파일이 폴더를 옮겨다니므로 툴/참조는 경로가 아니라 frontmatter **`id`로 추적**한다.
+  (rename/edit 머지 충돌 시에도 id가 안정적 식별자)
+
+### 파일명 · id 발급 · 설정(`.docat.yml`)
+
+**경로**: `docat/<status>/<id>-<slug>.md`  (예: `docat/in-progress/YJ-6-party-signup.md`)
+
+- **`<id>`** — 참조·커밋태그·`supersedes`는 항상 id로(파일명·경로 아님). 발급:
+  - **트래커 있음(주)**: 트래커 발급 id(`JIRA-123`) — 중앙에서 원자적, 유일.
+  - **트래커 없음**: `.docat.yml` 로스터의 **`<prefix>-<seq>`**(`YJ-6`). prefix는
+    github-id→코드 매핑(팀 내 유일), seq는 그 prefix 기존 파일 **max+1**(전 `docat/**`
+    스캔, done 포함). **공유 순번 카운터 금지**.
+    - 팀 충돌 0(prefix 유일). 자기충돌(같은 사람 병렬 브랜치)은 조용한 중복 id를 낳으므로
+      **id-유일성 CI 게이트**가 잡는다(§9).
+    - prefix ≠ assignee: prefix는 **만든 사람 네임스페이스**(id에 박혀 불변),
+      assignee는 현재 책임자(가변). YJ-6이 재배정돼도 id는 YJ-6.
+- **`<slug>`** — **항상 ASCII**(kebab). 크로스-OS git 안전(mac NFD ↔ Linux NFC 문제 회피).
+- **사람 언어 = 설정 언어**: `title` · `summary` · 본문은 `.docat.yml` `lang`로 생성 —
+  **영어권=영어, 한국 팀=한글**. slug만 ASCII, 나머지는 로컬 언어.
+
+**`.docat.yml`** (팀이 미리 세팅, git 공유):
+
+```yaml
+lang: ko                 # 생성 문서 언어(title/summary/본문). slug은 항상 ASCII
+repos:                   # 관리 대상 레포 (위성 모드 §12). alias → remote(이식가능)
+  backend: { remote: github.com/myteam/backend }
+  app:     { remote: github.com/myteam/app }
+assignees:               # github-id → prefix (트래커 없을 때 id 발급)
+  younjun-kim: YJ        # prefix는 팀 내 유일
+  minsu-kim:   KM
+# tracker: jira          # (옵션) 트래커 쓰면 id는 트래커 발급, prefix 로스터 불필요
+# 로컬 경로는 .docat.local.yml(gitignore)에 분리 — §12
+```
+
+## 3. 소유 vs 참조 (federation)
+
+| 층 | 소유처 | 방식 |
+|---|---|---|
+| 기획 (why/what) | Confluence/노션 | **참조**(링크) — 복제 금지 |
+| 데이터 계약 | 코드(schema/types/OpenAPI) | **참조** |
+| 프로젝트 트래커 (backlog/sprint/PM) | Jira/Linear | **참조**(`tracker:` 링크) — 보완, 미러 아님 |
+| **실행 상태** (draft→done) | **폴더** | repo가 소유 |
+| how · 결정 | **문서 본문** | 유일하게 문서가 소유 |
+| 담당자 | **frontmatter** | §5 |
+
+### 트래커 보완 — 대체가 아니다 (미러 금지 규칙)
+
+docat은 Jira/Linear를 **대체하지 않고 보완**한다. 둘은 **해상도가 다르다**:
+
+- **트래커** = 무엇/누가/언제 + **거친** 상태(backlog/sprint/done). PM·조직·비개발자용.
+- **docat 폴더** = 설계+how + **미세** 실행 파이프라인(draft→approved→in-progress→done).
+  에이전트·개발자용.
+
+트래커의 "In Progress" 하나가 docat의 여러 폴더에 걸친다. **1:1 미러가 아니라 다른
+해상도** → 동기화 강박 불필요, 거친 단방향 넛지만(docat `done` → 트래커 `Done`).
+
+> **불변 규칙**: docat 상태는 트래커보다 **항상 더 미세**하다. 절대 미러하지 않는다.
+> 미러하려는 순간 이중소스 드리프트가 부활한다.
+
+## 4. frontmatter 스키마
+
+```yaml
+---
+id: X-57
+title: 파티 개설·정원 동시성
+summary: 파티 개설·신청·수락 + 정원 동시성 제어   # 한 줄 — index가 노출(progressive disclosure §8-⑦)
+assignee: younjun               # 현재 책임자 (가변, ≠ author)
+target: [backend, app]          # .docat.yml repos alias — 건드리는 코드베이스(멀티레포 OK, §12)
+planning: "https://…/notion"    # 기획 원천 링크 — 참조만, 복제 금지
+tracker: "https://…/JIRA-123"   # 프로젝트 트래커 링크 — 보완, 미러 아님 (§3). 없으면 생략
+---
+```
+
+- `status` · `author` · `updated`는 **손으로 쓰지 않는다** — 각각 폴더 · git ·
+  git에서 파생.
+- `target`은 **리스트** — 멀티레포/풀스택 작업은 문서가 범위를 정의하고 그 기준으로
+  진행한다(co-location 불필요, §11).
+- 헤딩(본문 4섹션)은 verbatim·순서 고정(훅/인덱스 파싱이 의존).
+
+## 5. 담당자(assignee) vs 작성자(author)
+
+- **`assignee`** = 지금 책임자. **가변**(핸드오프로 바뀜). → frontmatter 명시.
+  "누가 이걸 지금 맡고 있나"의 유일한 답.
+- **author** = 만든 사람. **불변**. → **git이 이미 기록**(첫 커밋 author).
+  복제하지 않고 git 파생(또는 생성 시 1회 stamp, 인덱스 표시용).
+
+## 6. per-folder `index.md` (자동생성)
+
+- 각 폴더에 `index.md`. 스크립트가 그 폴더 파일들의 frontmatter를 긁어
+  `id · title · summary · assignee · updated(git 파생)` 표를 생성(title/summary는 `lang` 언어).
+- **목적**: AI/사람이 파일을 다 안 읽고 **인덱스 하나로 빠르게 참조**.
+- `in-progress/index.md` = **현재 집중 뷰**(현재에 가장 가까운 작업 목록).
+- **손으로 수정 금지**(생성물). pre-commit 훅 또는 CI가 재생성.
+
+## 7. 현재 상태는 "유지"가 아니라 "파생"한다 (git 모델)
+
+- `done/` = **동결 히스토리**(git 커밋처럼 불변, 손대지 않음).
+- "현재 상태" 문서를 **유지하지 않는다** — git이 현재 스냅샷 문서를 유지하지 않는
+  것과 같은 이유로. live 소스는 **코드(as-built) + 기획(as-intended) + in-progress**.
+- area별 "현재 how" = 관련 이슈들을 **누적(union)** → `supersedes`로 죽은 것 제거
+  → **recency 정렬**(git blame처럼 최근이 충돌 시 승).
+- **함정**: recency만으론 틀림. 안 겹치는 옛 이슈는 여전히 유효 → 반드시 **누적 후**
+  같은 대상을 건드린 것만 최신이 이긴다. (겹침 자동판정은 v0.2, 우선은 `supersedes` 명시)
+
+## 8. 단점 & 극복 — fatten 금지, generate/gate
+
+문서를 살찌우면(Spec Kit식 7파일) 다시 드리프트한다. 극복은 **재계산되는 산출물 +
+CI 게이트**로 — 원리적으로 드리프트 못 하는 것들.
+
+| 단점 | 극복 | 형태 |
+|---|---|---|
+| ① 현재 상태 맵 없음 | area/thread 맵 **자동생성**(내용 아닌 포인터) | `area-map-gen` |
+| ② 참조 링크 썩음 | **ref-integrity gate**(CI가 링크 resolve 검사, 코드참조는 심볼/앵커) | `ref-integrity-gate` |
+| ③ 자기완결성 상실(에이전트) | 링크 옆 **dated excerpt**(날짜 박힌 발췌, "비권위·링크 우선") | 템플릿 규칙 + `/work-new` fetch |
+| ④ 후속 파편화 | `supersedes`/`follows` **스레드** + area 맵 스티칭 | frontmatter + `area-map-gen` |
+| ⑤ 계약 강제의 역설 | 스키마 복제 대신 **테스트를 참조**, 게이트가 실행(executable spec) | `contract-drift-gate` |
+| ⑥ 상태 이중기록 | **폴더=상태로 해결됨**(§2) — 단일 소스 | — |
+| ⑦ 문서 길이 → 읽기 토큰 | **progressive disclosure** — index로 걸러 필요한 섹션만 | index `summary` + verbatim 헤딩 |
+
+### ⑦ 문서 길이 / 읽기 토큰 — progressive disclosure
+
+단일 융합 문서는 이미 Spec Kit 7파일 캐스케이드 대비 토큰 **절약**이다(§8 도입).
+진짜 비용은 "문서가 길다"가 아니라 **"안 필요한 걸 다 읽거나 반복해 읽는 것"**.
+해법은 쪼개는 게 아니라 3단 로딩:
+
+1. **index.md (대부분 여기서 끝)** — frontmatter `summary:` 한 줄을 인덱스가 노출.
+   "지금 뭐가 돌아가나"의 대부분은 문서를 안 열고 인덱스만으로 해결.
+2. **섹션 부분읽기** — verbatim·순서 고정 헤딩(§4)의 진짜 목적. 빌드 시 `## How`만
+   읽고 `## Decisions` 로그 전체는 안 읽는다(offset/limit). 전체 파일 로드 회피.
+3. **전체는 "왜 이렇게 됐지" 물을 때만**.
+
+**Hot/Cold 구조**: `How`+`Tasks`(hot, 얇게·위쪽) vs `Decisions`(cold, append-only).
+로그가 자라도 섹션 읽기라 hot 경로에 영향 없음. **multi-file 분할은 금지**(캐스케이드 부활).
+
+**길이 = 쪼개라 신호**: 이슈=기능1개라 문서는 유계. 2000줄로 부풀면 낭비가 아니라
+"이슈가 너무 크다"는 냄새 → `supersedes`/`follows`로 서브이슈 분할. 자기교정 압력.
+
+**caching**: 한 세션 내 재읽기는 대체로 프롬프트 캐시로 완화(본질은 위 1~3).
+
+## 9. 강제력 = 코드 (훅/게이트)
+
+문서는 설득이고, **코드만 강제**한다. 훅 로드맵:
+
+- `ref-integrity-gate` — 참조 링크/심볼 resolve 검사 + **id 유일성 검사**(자기충돌 방지) (차별점 ①)
+- `contract-drift-gate` — 계약 테스트 실행, 코드-문서 불일치 시 빌드 실패
+- `index/area-map 생성` — per-folder index + area 맵 자동생성
+- `index merge-driver` — index.md 충돌 시 재생성(§10)
+
+**v0.1 우선순위**: `ref-integrity-gate`(id 유일성 포함) + `done 이동·동결` 부터
+(가장 차별적 + 가장 필요). 나머지는 v0.2.
+
+## 10. 뾰족한 곳 & 해법
+
+1. **`index.md` 머지 충돌**(팀 작업 최대 리스크) — 생성물이라 여러 브랜치가 각자
+   재생성 → 머지 충돌. **해법**: `.gitattributes`에 **merge=regenerate 드라이버**
+   등록(충돌 나면 스크립트 재실행 = 정답). 커밋하되 자동해소.
+2. **트래커 스케일 천장** — docat 폴더는 미세 실행 상태만. 스프린트 보드·
+   크로스프로젝트·PM 뷰는 트래커가 담당. **해법**: §3 보완 모델 — `tracker:` 링크로
+   연결하되 **다른 해상도, 미러 금지**. (대체 아님이 처음부터 전제)
+3. **상태 확장(blocked·on-hold)** — 폴더 증식 위험. **해법**: 핵심 4폴더 고정
+   (draft·approved·in-progress·done), 세부는 frontmatter `sub-status`(폴더 아님).
+   리뷰는 폴더가 아니라 게이트(§2). 폴더는 liveness 경계만.
+
+## 11. 범위 / 전제
+
+- **타깃**: **개발자·에이전트 전용**. 비개발자(PM·디자이너)는 이 repo를 안 본다 —
+  그들은 트래커(Jira/Linear)를 쓴다(docat이 보완, §3).
+- **전제**: 에이전트 기반 개발 — 설계를 문서에 두고 → 사람 승인 → 에이전트 빌드 →
+  리뷰(변경 문서 반영) → 배포·완료. 폴더 전환이 이 파이프라인의 게이트.
+- **멀티레포 무관**: 이슈 문서가 작업 단위이고 `target` 리스트로 범위를 정의한다.
+  문서는 한 곳에 살고 N개 코드베이스를 참조 → co-location 불필요.
+- **비목표**: 트래커 **대체**(보완일 뿐), 실시간 협업 보드, 외부 통합, 비개발자 UI.
+
+## 12. 배포 모델 — 위성(satellite) 기본, embedded 옵션
+
+docat 데이터(`docat/`·`index.md`·`.docat.yml`)가 어디 사는가. **플러그인 자체는
+전역 설치라 어느 레포도 오염하지 않는다** — 문제는 데이터 위치뿐.
+
+### 기본: 위성 — docat은 독립 레포, 대상 레포를 참조
+
+```
+myteam-backend/     ← 관리 대상 (docat 흔적 0)
+myteam-app/         ← 관리 대상
+~/docat-yj/       ← docat 레포 (독립). docat/ + .docat.yml
+```
+
+- `.docat.yml`의 **`repos:`** 가 관리 대상을 참조(alias → remote). **1개 아니어도 됨.**
+- 이슈 `target`·코드참조가 alias 사용: `backend:src/matching/scorer.ts#MatchScorer`.
+- **오염 0**(대상 레포는 docat을 모름) · **멀티레포 native** · **솔로/팀 통합**
+  (차이는 docat 레포를 private로 두냐 공용으로 두냐뿐).
+
+**로컬 경로 이식성**: `remote`는 공유·이식가능하나 로컬 체크아웃 경로는 기기별이라 분리:
+
+```yaml
+# .docat.local.yml  (gitignore, 기기별)
+paths:
+  backend: ~/work/myteam-backend
+  app:     ~/work/myteam-app
+```
+
+게이트는 `repos.remote` + `paths`를 합쳐 코드참조를 resolve.
+
+**교차 레포 링크**: 코드 커밋(대상 레포)과 이슈 이동 커밋(docat 레포)이 분리되므로
+결합이 느슨함 → **이슈 id를 코드 커밋 메시지에**, **코드 SHA를 이슈 `Decisions`에** 상호 링크.
+
+### 옵션: embedded — 단일 레포 팀이 "docs-with-code" 원할 때
+
+`docat/`를 코드 레포 안에 두어 같은 PR로 코드+문서를 함께 버전관리. `repos:` 불필요
+(자기 레포가 대상). co-location·원자적 커밋 이점, 단 그 레포 하나에만 묶임.
+
+### 선택 기준
+
+| 상황 | 모드 |
+|---|---|
+| 솔로(팀 미도입) | **위성**(private docat 레포) — 대상 레포 오염 0 |
+| 멀티레포 | **위성** — 한 docat 레포가 N개 관리 |
+| 단일레포 + docs-with-code | embedded |
+| 팀 공용 추적 | 위성(공용 레포) 또는 embedded |
+
+**솔로→팀 승격**: 위성 private → remote를 공용으로 바꾸거나, embedded로 옮김
+(`docat/`를 코드 레포로 git mv).
+
+---
+
+## Open Questions (미해결)
+
+- area/태그를 어떻게 정의할지 — 맵 생성 단위.
+- 겹침(supersede) 자동판정 방식 (v0.2). 우선은 `supersedes` 수동 명시.
+- `index` merge-driver 구체 구현.

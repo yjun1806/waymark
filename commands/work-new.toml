@@ -1,0 +1,22 @@
+description = "Create a new Docat issue doc (Why/How/Tasks/Decisions) in docat/draft/"
+
+prompt = """
+Create a new Docat issue document. Docat = one issue = one thin file; the folder is the status; reference external truth, never copy it.
+
+1. Read `.docat.yml` (and `.docat.local.yml` if present) for: `lang`, `repos` (alias → remote), `assignees` (github-id → prefix), and whether a `tracker` is configured.
+
+2. Gather from the user / their request: the issue title, which repos it targets (MUST be aliases declared in `repos:`), and the planning-source link if any.
+
+3. Allocate the `id`:
+   - If a tracker is configured → use the tracker issue id (e.g. JIRA-123). Ask for it.
+   - Else → resolve the current user's prefix from `assignees` (via `gh api user`, fallback git email), scan `docat/**` for existing `<prefix>-<n>` ids, and use `<prefix>-<max+1>`. NEVER a shared global counter.
+
+4. Create `docat/draft/<id>-<slug>.md` from `templates/work.template.md`:
+   - `<slug>` = ASCII kebab of the title (transliterate if the title is non-ASCII). The filename is always ASCII.
+   - Fill frontmatter: `id`, `title` (in `lang`), `summary` (one line, in `lang`), `assignee` (current github-id), `target` (repo aliases), `planning` (link, or omit if infra), `tracker` (link, or omit). Do NOT add a `status` field — the folder is the status.
+   - Author the Why/How/Tasks/Decisions guidance and content in `lang`. At draft stage, fill `Why` (+ a rough `How`); leave the rest as headings.
+   - Reference the planning source by link only. Never paste its content; a short DATED excerpt marked "non-authoritative, see link" is allowed.
+   - Delete the template's HTML comments and <bracketed guidance> after filling.
+
+5. Confirm the created path. Remind: it is in `draft/`. Use `/work-move` (git mv) to advance: draft → approved (human approves) → in-progress → done (frozen; review/tests gate the move to done). Do not hand-edit any index.md.
+"""
