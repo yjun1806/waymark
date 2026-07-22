@@ -11,7 +11,7 @@ Create a new Docat issue document. Docat = one issue = one thin file; the folder
    - If a tracker is configured → use the tracker issue id (e.g. JIRA-123). Ask for it.
    - Else → resolve the current user's prefix from `assignees` (via `gh api user`, fallback git email), scan `docat/**` for existing `<prefix>-<n>` ids, and use `<prefix>-<max+1>`. NEVER a shared global counter.
 
-4. Create `docat/draft/<id>-<slug>.md` from `templates/work.template.md`:
+4. Create `docat/draft/<id>-<slug>.md` from the plugin's issue template — find it at `${CLAUDE_PLUGIN_ROOT}/templates/work.template.md` or under `~/.claude/plugins/*docat*/templates/`; if you can't locate it, reproduce the Why/How/Tasks/Decisions structure below:
    - `<slug>` = ASCII kebab of the title (transliterate if the title is non-ASCII). The filename is always ASCII.
    - Fill frontmatter: `id`, `title` (in `lang`), `summary` (one line, in `lang`), `assignee` (current github-id), `target` (repo aliases), `planning` (link, or omit if infra), `tracker` (link, or omit). Do NOT add a `status` field — the folder is the status.
    - Author the Why/How/Tasks/Decisions guidance and content in `lang`. At draft stage, fill `Why` (+ a rough `How`); leave the rest as headings.

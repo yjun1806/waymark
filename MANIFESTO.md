@@ -49,11 +49,14 @@ a discipline you must sustain.
 
 ## The one enforcement rule
 
-Documents are persuasion; only code is enforcement. Docat puts its
-teeth in **the contract-drift gate**: the data contract is validated
-against the code in CI. If the doc's claimed contract and the code
-disagree, the build fails. Everything else (freezing on done, index
-generation, reference integrity) is a hook, not a hope.
+Documents are persuasion; only code is enforcement. Docat's teeth live in
+git hooks (and, for teams, CI) — not in prose. **Today** the commit gate
+enforces id uniqueness, required frontmatter, the four verbatim headings,
+and the **freeze on `done/`**; the per-folder indexes regenerate on commit.
+**On the roadmap**: a contract-drift gate (validate the doc's claimed
+contract against the code in CI) and reference-integrity checks. The
+principle is the constant — whatever Docat claims to enforce, it enforces in
+code, not by asking nicely.
 
 ## The shape
 

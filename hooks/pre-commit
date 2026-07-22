@@ -1,7 +1,8 @@
 #!/bin/sh
 # docat git pre-commit hook.
 #   1) regenerate docat/<status>/index.md and stage them
-#   2) run the docat gate (id uniqueness, frontmatter, headings) — block commit on failure
+#   2) enforce: done/ docs are FROZEN (moves INTO done/ are fine; editing a done doc is not)
+#   3) run the docat gate (id uniqueness, frontmatter, headings) — block commit on failure
 # Installed into a docat DATA repo by hooks/install.sh (copies the .py scripts alongside).
 ROOT="$(git rev-parse --show-toplevel)"
 [ -d "$ROOT/docat" ] || exit 0   # no docat data in this repo — nothing to do
@@ -10,6 +11,17 @@ DIR="$(dirname "$0")"
 
 python3 "$DIR/docat-index.py" "$ROOT" || exit 1
 git add "$ROOT"/docat/*/index.md 2>/dev/null
+
+# done/ is frozen: block staged MODIFICATIONS to docs already under docat/done/.
+# (A move INTO done/ shows up as an add/rename, not a modify, so it is allowed.)
+frozen=$(cd "$ROOT" && git diff --cached --name-status -- docat/done \
+  | awk '$1 == "M" && $2 ~ /\.md$/ && $2 !~ /index\.md$/ { print $2 }')
+if [ -n "$frozen" ]; then
+  echo "✗ docat: done/ is frozen — do not edit these docs:" >&2
+  printf '    %s\n' $frozen >&2
+  echo "  For a change: git mv the issue back to approved/ and re-approve." >&2
+  exit 1
+fi
 
 if ! python3 "$DIR/docat-check.py" "$ROOT"; then
   echo "✗ docat gate failed — fix the issues above and re-commit." >&2

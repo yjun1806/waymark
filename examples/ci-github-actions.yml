@@ -1,0 +1,22 @@
+# docat gate in CI — copy to .github/workflows/docat.yml in your docat DATA repo.
+#
+# Local git hooks are per-clone and skip merge commits, so CI is what actually
+# guarantees the gate runs on every push/PR (closes the unmet-clone, merge-commit,
+# and --no-verify bypasses). CI runs the gate only (id uniqueness, frontmatter,
+# headings); it does not need the index generator.
+#
+# `docat-check.py` must be available in the job. Two options:
+#   A) vendor it — commit hooks/docat-check.py into your repo (simplest), or
+#   B) fetch it from the plugin repo at run time (uncomment the fetch step; the
+#      plugin repo must be readable by the runner — public, or use a token).
+name: docat
+on: [push, pull_request]
+jobs:
+  gate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      # B) fetch from the plugin (public repo):
+      # - run: curl -fsSL https://raw.githubusercontent.com/yjun1806/docat/main/hooks/docat-check.py -o docat-check.py
+      - name: Run docat gate
+        run: python3 docat-check.py .   # adjust path if vendored elsewhere
