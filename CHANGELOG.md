@@ -3,6 +3,12 @@
 All notable changes to Waymark are recorded here. Versions follow semver —
 pre-1.0, breaking changes may land in a minor bump.
 
+## v0.1.1 — 2026-07-22
+
+- **Index now shows `created`** — the per-folder `index.md` gains a `created` column
+  (git first-commit date, tracked across status-folder moves with `--follow`) next to
+  `updated`. Both are git-derived; no hand-written date fields (they would drift — §4).
+
 ## v0.1.0 — 2026-07-22
 
 Initial public release.

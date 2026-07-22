@@ -258,8 +258,10 @@ tracker: ["https://…/JIRA-123", "https://…/LIN-45"]   # tracker issue link(s
 ## 6. Per-folder `index.md` (auto-generated)
 
 - Each folder has an `index.md`. A script scrapes the frontmatter of the folder's
-  files and generates a table of `id · title · summary · assignee · updated
-  (git-derived)` (title/summary in the `lang` language).
+  files and generates a table of `id · title · summary · assignee · created ·
+  updated` (title/summary in the `lang` language). **`created` and `updated` are
+  git-derived** — first and last commit dates, `created` via `--follow` so it
+  survives status-folder moves. No hand-written date fields (they would drift, §4).
 - **Purpose**: AI and humans get a **fast reference from one index** without reading
   every file.
 - `in-progress/index.md` = **the current-focus view** (the list of work closest to

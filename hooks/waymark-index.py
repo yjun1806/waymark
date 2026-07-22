@@ -43,6 +43,19 @@ def git_updated(root, rel_path):
         return "—"
 
 
+def git_created(root, rel_path):
+    # First commit date, following renames (files move between status folders via git mv).
+    try:
+        out = subprocess.run(
+            ["git", "-C", root, "log", "--follow", "--format=%cs", "--", rel_path],
+            capture_output=True, text=True, timeout=10,
+        )
+        dates = [d for d in out.stdout.splitlines() if d.strip()]
+        return dates[-1] if dates else "—"
+    except Exception:
+        return "—"
+
+
 def gen_folder(root, status):
     folder = os.path.join(root, "waymark", status)
     if not os.path.isdir(folder):
@@ -57,6 +70,7 @@ def gen_folder(root, status):
             fm.get("title", ""),
             fm.get("summary", ""),
             fm.get("assignee", ""),
+            git_created(root, f"waymark/{status}/{name}"),
             git_updated(root, f"waymark/{status}/{name}"),
             name,
         ))
@@ -65,11 +79,11 @@ def gen_folder(root, status):
         "",
         f"# {status} ({len(rows)})",
         "",
-        "| id | title | summary | assignee | updated |",
-        "|----|-------|---------|----------|---------|",
+        "| id | title | summary | assignee | created | updated |",
+        "|----|-------|---------|----------|---------|---------|",
     ]
-    for id_, title, summary, assignee, updated, fname in rows:
-        lines.append(f"| [{id_}](./{fname}) | {title} | {summary} | {assignee} | {updated} |")
+    for id_, title, summary, assignee, created, updated, fname in rows:
+        lines.append(f"| [{id_}](./{fname}) | {title} | {summary} | {assignee} | {created} | {updated} |")
     lines.append("")
     with open(os.path.join(folder, "index.md"), "w", encoding="utf-8") as f:
         f.write("\n".join(lines))

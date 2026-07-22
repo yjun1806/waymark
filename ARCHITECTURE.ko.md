@@ -218,7 +218,9 @@ tracker: ["https://…/JIRA-123", "https://…/LIN-45"]   # 트래커 이슈 링
 ## 6. per-folder `index.md` (자동생성)
 
 - 각 폴더에 `index.md`. 스크립트가 그 폴더 파일들의 frontmatter를 긁어
-  `id · title · summary · assignee · updated(git 파생)` 표를 생성(title/summary는 `lang` 언어).
+  `id · title · summary · assignee · created · updated` 표를 생성(title/summary는 `lang` 언어).
+  **`created`·`updated`는 git 파생** — 첫/마지막 커밋 날짜이고, `created`는 `--follow`로
+  상태 폴더 이동을 넘어 추적한다. 손으로 쓰는 날짜 필드는 없다(드리프트하므로, §4).
 - **목적**: AI/사람이 파일을 다 안 읽고 **인덱스 하나로 빠르게 참조**.
 - `in-progress/index.md` = **현재 집중 뷰**(현재에 가장 가까운 작업 목록).
 - **손으로 수정 금지**(생성물). pre-commit 훅 또는 CI가 재생성.
