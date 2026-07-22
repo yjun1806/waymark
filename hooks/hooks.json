@@ -1,0 +1,15 @@
+{
+  "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": "Edit|Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 \"${CLAUDE_PLUGIN_ROOT}/hooks/docat-index.py\" \"${CLAUDE_PROJECT_DIR}\" >/dev/null 2>&1 || true"
+          }
+        ]
+      }
+    ]
+  }
+}

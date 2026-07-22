@@ -1,0 +1,18 @@
+#!/bin/sh
+# docat git pre-commit hook.
+#   1) regenerate docat/<status>/index.md and stage them
+#   2) run the docat gate (id uniqueness, frontmatter, headings) — block commit on failure
+# Installed into a docat DATA repo by hooks/install.sh (copies the .py scripts alongside).
+ROOT="$(git rev-parse --show-toplevel)"
+[ -d "$ROOT/docat" ] || exit 0   # no docat data in this repo — nothing to do
+
+DIR="$(dirname "$0")"
+
+python3 "$DIR/docat-index.py" "$ROOT" || exit 1
+git add "$ROOT"/docat/*/index.md 2>/dev/null
+
+if ! python3 "$DIR/docat-check.py" "$ROOT"; then
+  echo "✗ docat gate failed — fix the issues above and re-commit." >&2
+  exit 1
+fi
+exit 0

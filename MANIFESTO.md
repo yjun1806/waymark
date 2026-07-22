@@ -26,9 +26,12 @@ SDD failure mode — acknowledged in Spec Kit's own issue tracker.
 ## Three principles
 
 ### 1. Reference, don't duplicate
-Truth that already lives in an authoritative place is **linked, never
-copied**. Planning → link to Confluence/Notion. Contract → the code is
-the source; the doc only references it. If you copied it, you now own a
+Truth that already lives in an authoritative place is **referenced, not
+re-sourced**. Planning → link to Confluence/Notion. Contract → the code
+is the source; the doc references it. A thin, **dated, non-authoritative
+excerpt** is fine (for agent context / link-rot resilience) — dated and
+linked, it can't compete with the truth. What's banned is a *maintained
+copy that becomes a second source of truth* — that you would own as a
 drift liability.
 
 ### 2. Own only the HOW

@@ -18,5 +18,5 @@ Create a new Docat issue document. Docat = one issue = one thin file; the folder
    - Reference the planning source by link only. Never paste its content; a short DATED excerpt marked "non-authoritative, see link" is allowed.
    - Delete the template's HTML comments and <bracketed guidance> after filling.
 
-5. Confirm the created path. Remind: it is in `draft/`. Use `/work-move` (git mv) to advance: draft → approved (human approves) → in-progress → done (frozen; review/tests gate the move to done). Do not hand-edit any index.md.
+5. Confirm the created path. Remind: it is in `draft/`. Status moves happen automatically as work progresses — Claude `git mv`s the doc per the workflow rules in CLAUDE.md (draft → approved after human approval → in-progress → done after the gate passes; done is frozen). Do not hand-edit any index.md.
 """

@@ -1,0 +1,19 @@
+{
+  "$schema": "https://json.schemastore.org/claude-code-marketplace.json",
+  "name": "docat",
+  "description": "Reference-don't-duplicate spec-driven development, delivered as a Claude Code plugin.",
+  "owner": {
+    "name": "Youngjun Kim",
+    "url": "https://github.com/yjun1806"
+  },
+  "plugins": [
+    {
+      "name": "docat",
+      "source": { "source": "github", "repo": "yjun1806/docat" },
+      "description": "One thin doc per issue that references external SSOT (planning, contract, tracker) instead of copying it, and freezes on done. Folder = status; git-native; complements the tracker.",
+      "homepage": "https://github.com/yjun1806/docat",
+      "license": "MIT",
+      "keywords": ["spec-driven", "sdd", "issue-tracking", "convention", "claude-code", "workflow"]
+    }
+  ]
+}

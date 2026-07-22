@@ -3,8 +3,11 @@
   "description": "Reference-don't-duplicate spec-driven development: one thin doc per issue that references external SSOT (planning, contract, tracker) instead of copying it, and freezes on done.",
   "version": "0.1.0",
   "author": {
-    "name": "김영준"
+    "name": "Youngjun Kim",
+    "url": "https://github.com/yjun1806"
   },
+  "homepage": "https://github.com/yjun1806/docat",
+  "repository": "https://github.com/yjun1806/docat",
   "license": "MIT",
   "commands": "./commands",
   "skills": "./skills",
