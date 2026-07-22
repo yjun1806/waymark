@@ -1,12 +1,12 @@
 <!--
-  Docat workflow rules. `docat init` copies this to docat/rules.md and imports it into your
-  CLAUDE.md via `@docat/rules.md` (auto-loaded each session). Managed by Docat — `docat-remove`
+  Waymark workflow rules. `waymark init` copies this to waymark/rules.md and imports it into your
+  CLAUDE.md via `@waymark/rules.md` (auto-loaded each session). Managed by Waymark — `waymark-remove`
   deletes this file. Do not hand-edit.
 -->
 
-## Docat workflow (this repo uses Docat)
+## Waymark workflow (this repo uses Waymark)
 
-Issue docs live at `docat/<status>/<id>-<slug>.md`. **The folder IS the status.** The doc owns
+Issue docs live at `waymark/<status>/<id>-<slug>.md`. **The folder IS the status.** The doc owns
 only the *how* and *decisions*; planning and the data contract are **referenced** (link / code),
 never re-sourced.
 
@@ -38,10 +38,10 @@ is too big**. **Suggest splitting it into smaller issues** — link them with `s
 - **`done/` is frozen** — never edit a done doc.
 - **Reference, don't re-source** — link planning/contract; a *dated, non-authoritative excerpt*
   is fine, a *maintained copy (second source of truth)* is not.
-- **id** comes from the tracker, or `<prefix>-<seq>` from `.docat.yml` — never a shared counter.
+- **id** comes from the tracker, or `<prefix>-<seq>` from `.waymark.yml` — never a shared counter.
 - Commit messages cross-link the issue `id` (and, for done, the code commit SHA).
 
 ### Creating an issue
 
-New substantive work → create `docat/draft/<id>-<slug>.md` from the template. Author
-`title`/`summary`/body in the team's `lang` (from `.docat.yml`); the filename `slug` is ASCII.
+New substantive work → create `waymark/draft/<id>-<slug>.md` from the template. Author
+`title`/`summary`/body in the team's `lang` (from `.waymark.yml`); the filename `slug` is ASCII.

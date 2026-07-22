@@ -1,16 +1,16 @@
 #!/usr/bin/env python3
-"""docat-check — the ref-integrity gate. Validates issue docs; exit non-zero on any violation.
+"""waymark-check — the ref-integrity gate. Validates issue docs; exit non-zero on any violation.
 
 Checks (v0.1):
   - frontmatter block present
   - required fields: id, title
-  - id UNIQUENESS across all docat/** (catches the self-collision from parallel branches)
+  - id UNIQUENESS across all waymark/** (catches the self-collision from parallel branches)
   - no `status` field (the folder is the single source of status)
   - the 4 headings present in verbatim order: Why → How → Tasks → Decisions
 
 Deferred to v0.2: planning/tracker link liveness, code-symbol resolution, contract tests.
 
-Usage: docat-check.py [repo_root]     (default: current directory)
+Usage: waymark-check.py [repo_root]     (default: current directory)
 """
 import os
 import re
@@ -38,7 +38,7 @@ def parse(path):
 
 def main():
     root = sys.argv[1] if len(sys.argv) > 1 else "."
-    base = os.path.join(root, "docat")
+    base = os.path.join(root, "waymark")
     if not os.path.isdir(base):
         return 0
     errors = []
@@ -50,7 +50,7 @@ def main():
         for name in sorted(os.listdir(folder)):
             if not name.endswith(".md") or name == "index.md":
                 continue
-            rel = f"docat/{status}/{name}"
+            rel = f"waymark/{status}/{name}"
             fm, body = parse(os.path.join(folder, name))
             if fm is None:
                 errors.append(f"{rel}: missing frontmatter (--- block)")
@@ -74,11 +74,11 @@ def main():
                     break
                 pos = m.end()
     if errors:
-        sys.stderr.write("docat-check: FAILED\n")
+        sys.stderr.write("waymark-check: FAILED\n")
         for e in errors:
             sys.stderr.write(f"  ✗ {e}\n")
         return 1
-    print(f"docat-check: OK ({len(ids)} issue(s))")
+    print(f"waymark-check: OK ({len(ids)} issue(s))")
     return 0
 
 

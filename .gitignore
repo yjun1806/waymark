@@ -7,6 +7,10 @@ Thumbs.db
 .idea/
 *.swp
 
+# Python (hooks generate bytecode caches on run)
+__pycache__/
+*.pyc
+
 # Node (for future JS-based hooks/tooling)
 node_modules/
 npm-debug.log*

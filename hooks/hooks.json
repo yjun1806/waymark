@@ -6,7 +6,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "python3 \"${CLAUDE_PLUGIN_ROOT}/hooks/docat-index.py\" \"${CLAUDE_PROJECT_DIR}\" >/dev/null 2>&1 || true"
+            "command": "python3 \"${CLAUDE_PLUGIN_ROOT}/hooks/waymark-index.py\" \"${CLAUDE_PROJECT_DIR}\" >/dev/null 2>&1 || true"
           }
         ]
       }
