@@ -51,7 +51,11 @@ def main():
             if not name.endswith(".md") or name == "index.md":
                 continue
             rel = f"waymark/{status}/{name}"
-            fm, body = parse(os.path.join(folder, name))
+            try:
+                fm, body = parse(os.path.join(folder, name))
+            except OSError as e:
+                errors.append(f"{rel}: could not read ({e.strerror or e})")
+                continue
             if fm is None:
                 errors.append(f"{rel}: missing frontmatter (--- block)")
                 continue

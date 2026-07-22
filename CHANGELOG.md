@@ -3,6 +3,19 @@
 All notable changes to Waymark are recorded here. Versions follow semver —
 pre-1.0, breaking changes may land in a minor bump.
 
+## v0.2.2 — 2026-07-22
+
+First-pass review fixes.
+
+- **Index no longer breaks on `|`** — free-text `id`/`title`/`summary`/`assignee` are escaped
+  before entering the index table (a pipe in a title used to corrupt the row).
+- **Bounded commit time as `done/` grows** — `done/` is frozen, so the index reuses its
+  `created`/`updated` from the existing index.md instead of shelling out to git per doc on every
+  commit; only new arrivals do a one-time git lookup.
+- **`waymark-check` survives unreadable files** — a read error (race / permission) is reported
+  per file instead of crashing the pre-commit hook.
+- Minor: the frozen-`done/` file list prints space-safely; index docstring updated.
+
 ## v0.2.1 — 2026-07-22
 
 - **Fix: plugin load error** — removed the redundant `"hooks": "./hooks/hooks.json"` from

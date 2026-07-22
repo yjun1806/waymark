@@ -2,7 +2,9 @@
 """waymark-index — regenerate waymark/<status>/index.md from each issue's frontmatter.
 
 Deterministic, stdlib-only, no dependencies. Safe no-op if there is no waymark/ folder.
-`updated` is derived from git (last commit date); never hand-written.
+`created`/`updated` are derived from git (first/last commit dates); never hand-written.
+`done/` dates are frozen, so they're reused from the existing index.md instead of
+re-shelling git per doc — keeps commit time bounded as `done/` grows.
 
 Usage: waymark-index.py [repo_root]     (default: current directory)
 """
@@ -56,22 +58,55 @@ def git_created(root, rel_path):
         return "—"
 
 
+def cell(v):
+    # Escape table-breaking chars so a free-text value can't corrupt the markdown row.
+    return str(v).replace("\n", " ").replace("|", "\\|").strip()
+
+
+def load_done_cache(folder):
+    # done/ is frozen → its created/updated never change. Reuse them from the existing
+    # index.md instead of shelling out to git per doc, so commit time stays bounded as
+    # done/ grows. New arrivals (not in the old index) fall through to a one-time git lookup.
+    cache = {}
+    try:
+        with open(os.path.join(folder, "index.md"), encoding="utf-8") as f:
+            for line in f:
+                if not line.startswith("| ["):  # data rows only (skip header/separator)
+                    continue
+                cells = re.split(r"(?<!\\)\|", line.rstrip("\n"))  # split on UNescaped pipes
+                if len(cells) < 4:
+                    continue
+                link = re.search(r"\]\(\./([^)]+)\)", cells[1])
+                if link:
+                    cache[link.group(1)] = (cells[-3].strip(), cells[-2].strip())
+    except OSError:
+        pass
+    return cache
+
+
 def gen_folder(root, status):
     folder = os.path.join(root, "waymark", status)
     if not os.path.isdir(folder):
         return
+    cache = load_done_cache(folder) if status == "done" else {}
     rows = []
     for name in sorted(os.listdir(folder)):
         if not name.endswith(".md") or name == "index.md":
             continue
         fm = parse_frontmatter(os.path.join(folder, name))
+        rel = f"waymark/{status}/{name}"
+        if name in cache:
+            created, updated = cache[name]
+        else:
+            created = git_created(root, rel)
+            updated = git_updated(root, rel)
         rows.append((
             fm.get("id", name[:-3]),
             fm.get("title", ""),
             fm.get("summary", ""),
             fm.get("assignee", ""),
-            git_created(root, f"waymark/{status}/{name}"),
-            git_updated(root, f"waymark/{status}/{name}"),
+            created,
+            updated,
             name,
         ))
     lines = [
@@ -83,7 +118,10 @@ def gen_folder(root, status):
         "|----|-------|---------|----------|---------|---------|",
     ]
     for id_, title, summary, assignee, created, updated, fname in rows:
-        lines.append(f"| [{id_}](./{fname}) | {title} | {summary} | {assignee} | {created} | {updated} |")
+        lines.append(
+            f"| [{cell(id_)}](./{fname}) | {cell(title)} | {cell(summary)} | "
+            f"{cell(assignee)} | {created} | {updated} |"
+        )
     lines.append("")
     with open(os.path.join(folder, "index.md"), "w", encoding="utf-8") as f:
         f.write("\n".join(lines))

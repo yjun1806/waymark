@@ -18,7 +18,7 @@ frozen=$(cd "$ROOT" && git diff --cached --name-status -- waymark/done \
   | awk '$1 == "M" && $2 ~ /\.md$/ && $2 !~ /index\.md$/ { print $2 }')
 if [ -n "$frozen" ]; then
   echo "✗ waymark: done/ is frozen — do not edit these docs:" >&2
-  printf '    %s\n' $frozen >&2
+  echo "$frozen" | while IFS= read -r f; do printf '    %s\n' "$f"; done >&2
   echo "  For a change: git mv the issue back to approved/ and re-approve." >&2
   exit 1
 fi
