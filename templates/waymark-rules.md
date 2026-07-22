@@ -43,5 +43,7 @@ is too big**. **Suggest splitting it into smaller issues** — link them with `s
 
 ### Creating an issue
 
-New substantive work → create `waymark/draft/<id>-<slug>.md` from the template. Author
-`title`/`summary`/body in the team's `lang` (from `.waymark.yml`); the filename `slug` is ASCII.
+New substantive work → create a draft issue doc via the **waymark-work** skill (or the
+`/work-new` command): it gathers the planning/tracker links, allocates the id, and scaffolds
+`waymark/draft/<id>-<slug>.md` from the template. Filename `slug` is ASCII; `title`/`summary`/body
+use the team's `lang` (from `.waymark.yml`).

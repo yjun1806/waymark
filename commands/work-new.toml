@@ -1,28 +1,8 @@
 description = "Create a new Waymark issue doc (Why/How/Tasks/Decisions) in waymark/draft/"
 
 prompt = """
-Create a new Waymark issue document. Waymark = one issue = one thin file; the folder is the status; reference external truth, never copy it.
-
-1. Read `.waymark.yml` (and `.waymark.local.yml` if present) for: `lang`, `repos` (alias → remote), `assignees` (github-id → prefix), and whether a `tracker_type` is configured (which tracker tool the team uses — Jira/Linear/…, used for id allocation). Note: `tracker_type` (config, the tool) is distinct from each doc's `tracker` frontmatter (the issue links).
-
-2. Gather the basics: the issue title, and which repos it targets (MUST be aliases declared in `repos:`).
-
-3. Ask EXPLICITLY what to link — do not assume none:
-   - **Planning source** (the why/what): a Confluence / Notion / PDF / doc link. "None — verbal discussion or pure infra" is a valid answer; record it as such, don't invent one.
-   - **Tracker issues** (Jira / Linear / GitHub Issues / any tool): the issue(s) this work syncs with. **Multiple are allowed** when one work unit spans several tickets (e.g. a backend ticket + a frontend ticket, or a cross-tool link). "None" is valid.
-   These are **references, not copies** — you link them and never mirror their contents (§3). If the tracker list keeps growing large, that is a smell the issue is too big — suggest splitting it.
-
-4. Allocate the `id` — always exactly ONE:
-   - If a `tracker_type` is configured AND the user designates one tracker issue as the primary for this work → id = that primary tracker id (e.g. JIRA-123). Central, atomic, unique.
-   - Else (no `tracker_type` configured, or none/multiple with no single primary) → prefix-seq: resolve the current user's prefix from `assignees` (via `gh api user`, fallback git email), scan `waymark/**` for existing `<prefix>-<n>` ids, and use `<prefix>-<max+1>`. NEVER a shared global counter.
-   Any *additional* tracker links are just entries in the `tracker` list — never the id.
-
-5. Create `waymark/draft/<id>-<slug>.md` from the plugin's issue template — find it at `${CLAUDE_PLUGIN_ROOT}/templates/work.template.md` or under `~/.claude/plugins/*waymark*/templates/`; if you can't locate it, reproduce the Why/How/Tasks/Decisions structure below:
-   - `<slug>` = ASCII kebab of the title (transliterate if the title is non-ASCII). The filename is always ASCII.
-   - Fill frontmatter: `id`, `title` (in `lang`), `summary` (one line, in `lang`), `assignee` (current github-id), `target` (repo aliases), `planning` (link, or omit if none), `tracker` (inline list `["url", ...]`, or omit / `[]` if none). Do NOT add a `status` field — the folder is the status.
-   - Author the Why/How/Tasks/Decisions guidance and content in `lang`. At draft stage, fill `Why` (+ a rough `How`); leave the rest as headings.
-   - Reference the planning source and tracker issues by link only. Never paste their content; a short DATED excerpt marked "non-authoritative, see link" is allowed.
-   - Delete the template's HTML comments and <bracketed guidance> after filling.
-
-6. Confirm the created path. Remind: it is in `draft/`. Status moves happen automatically as work progresses — Claude `git mv`s the doc per the workflow rules in CLAUDE.md (draft → approved after human approval → in-progress → done after the gate passes; done is frozen). Do not hand-edit any index.md.
+Create a new Waymark issue document by following the **waymark-work** skill's flow: read
+`.waymark.yml`; gather the title, target repos, planning source, and tracker issue links
+(multiple OK); allocate exactly one id; and scaffold `waymark/draft/<id>-<slug>.md` from the
+template. Invoke the waymark-work skill — if it isn't available, follow its steps directly.
 """

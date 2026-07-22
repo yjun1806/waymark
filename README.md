@@ -55,7 +55,7 @@ IDE), run:
 /plugin install waymark@waymark
 ```
 
-Installing activates the `waymark-init` skill and the `/work-new` command.
+Installing activates Waymark's skills (`waymark-init`, `waymark-work`, `waymark-update`, `waymark-remove`) and the `/work-new` command.
 Prerequisites: Claude Code · git · python3. (If the repo is private, `marketplace
 add` needs git access — only people with access can install, which is fine for
 internal team distribution.)
@@ -158,7 +158,7 @@ waymark/{draft,approved,in-progress,done}/   issue docs (folder = status) + auto
 .waymark.yml                                  team config (lang · repos · assignees)
 ```
 
-Plugin parts: `commands/` (slash commands) · `skills/` (`waymark-init`·`waymark-remove`) ·
+Plugin parts: `commands/` (slash commands) · `skills/` (`waymark-init`·`waymark-work`·`waymark-update`·`waymark-remove`) ·
 `hooks/` (enforcement) · `templates/` (`work.template`·`waymark-rules`).
 
 ## Language
