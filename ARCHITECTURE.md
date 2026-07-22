@@ -121,9 +121,11 @@ waymark/
 
 **경로**: `waymark/<status>/<id>-<slug>.md`  (예: `waymark/in-progress/YJ-6-party-signup.md`)
 
-- **`<id>`** — 참조·커밋태그·`supersedes`는 항상 id로(파일명·경로 아님). 발급:
-  - **트래커 있음(주)**: 트래커 발급 id(`JIRA-123`) — 중앙에서 원자적, 유일.
-  - **트래커 없음**: `.waymark.yml` 로스터의 **`<prefix>-<seq>`**(`YJ-6`). prefix는
+- **`<id>`** — 참조·커밋태그·`supersedes`는 항상 id로(파일명·경로 아님). **id는 언제나 정확히
+  하나** — 트래커 이슈를 여러 개 링크해도(§3) id는 그중 **primary 하나**(또는 prefix-seq)에서만
+  나오고, 나머지 링크는 `tracker` 리스트의 참조일 뿐 id가 아니다. 발급:
+  - **트래커 있음(주) + primary 지정**: primary 트래커 발급 id(`JIRA-123`) — 중앙에서 원자적, 유일.
+  - **트래커 없음 / primary 미지정 / 복수**: `.waymark.yml` 로스터의 **`<prefix>-<seq>`**(`YJ-6`). prefix는
     github-id→코드 매핑(팀 내 유일), seq는 그 prefix 기존 파일 **max+1**(전 `waymark/**`
     스캔, done 포함). **공유 순번 카운터 금지**.
     - 팀 충돌 0(prefix 유일). 자기충돌(같은 사람 병렬 브랜치)은 조용한 중복 id를 낳으므로
@@ -144,7 +146,7 @@ repos:                   # 관리 대상 레포 (위성 모드 §12). alias → 
 assignees:               # github-id → prefix (트래커 없을 때 id 발급)
   younjun-kim: YJ        # prefix는 팀 내 유일
   minsu-kim:   KM
-# tracker: jira          # (옵션) 트래커 쓰면 id는 트래커 발급, prefix 로스터 불필요
+# tracker_type: jira      # (옵션) 팀이 쓰는 트래커 종류. 설정 시 id는 primary 트래커 발급, prefix 로스터 불필요
 # 로컬 경로는 .waymark.local.yml(gitignore)에 분리 — §12
 ```
 
@@ -172,6 +174,10 @@ Waymark은 Jira/Linear를 **대체하지 않고 보완**한다. 둘은 **다른 
 다른 쪽보다 "더 미세"한 게 아니라 **재는 대상이 다르다** → 동기화 강박 불필요, 거친 단방향
 넛지만 둔다(Waymark `done` → 트래커 `Done`).
 
+**링크는 여러 개 가능** (`tracker`는 리스트, §4): 한 작업 단위가 여러 티켓에 걸치면(백엔드+
+프론트 티켓, 크로스툴) 다 링크한다. 그 경우 `done` 넛지도 링크 수만큼 **팬아웃**한다. 다만
+링크가 자꾸 많아지면 "이슈가 너무 크다 → `supersedes`/`follows`로 분리" 신호일 수 있다(§8).
+
 > **불변 규칙**: Waymark 폴더와 트래커 상태는 **다른 축**이다 — 서로 미러하지 않는다.
 > 폴더를 트래커 단계와 1:1로 맞추려는(미러) 순간 이중소스 드리프트가 부활한다. 트래커가
 > 아무리 잘게 쪼개도 Waymark은 폴더 수(4)를 늘려 따라가지 않는다(세부는 `sub-status`, §10-3).
@@ -185,10 +191,14 @@ title: 파티 개설·정원 동시성
 summary: 파티 개설·신청·수락 + 정원 동시성 제어   # 한 줄 — index가 노출(progressive disclosure §8-⑦)
 assignee: younjun               # 현재 책임자 (가변, ≠ author)
 target: [backend, app]          # .waymark.yml repos alias — 건드리는 코드베이스(멀티레포 OK, §12)
-planning: "https://…/notion"    # 기획 원천 링크 — 참조만, 복제 금지
-tracker: "https://…/JIRA-123"   # 프로젝트 트래커 링크 — 보완, 미러 아님 (§3). 없으면 생략
+planning: "https://…/notion"    # 기획 원천 링크 — 참조만, 복제 금지. 없으면 생략
+tracker: ["https://…/JIRA-123", "https://…/LIN-45"]   # 트래커 이슈 링크(들) — 보완·미러 아님(§3). 여러 개 OK, 없으면 [] 또는 생략
 ---
 ```
+
+- **`tracker`는 리스트** — 한 작업 단위가 여러 티켓에 걸치면(풀스택=백엔드+프론트 티켓,
+  크로스툴) 링크를 여럿 담는다. 파싱 안정을 위해 **인라인 리스트**(`["a","b"]`)로 쓴다.
+  링크는 **참조일 뿐 id가 아니다**(id는 §2대로 하나).
 
 - `status` · `author` · `updated`는 **손으로 쓰지 않는다** — 각각 폴더 · git ·
   git에서 파생.

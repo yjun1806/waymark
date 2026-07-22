@@ -40,8 +40,9 @@ Create `waymark/draft/`, `waymark/approved/`, `waymark/in-progress/`, `waymark/d
 - `assignees` roster — resolve the current user's github id (`gh api user -q .login`, fallback
   `git config user.email`), then ask their short **unique** prefix (uppercase, e.g. `YJ`). Add
   `<github-id>: <PREFIX>`.
-- Ask whether they use a tracker (Jira/Linear). If yes, set `tracker:` and note that ids will
-  come from the tracker instead of the roster.
+- Ask whether they use a tracker (Jira/Linear). If yes, set `tracker_type:` (the tool) and note
+  that ids will come from the primary tracker issue instead of the roster. (Per-issue tracker
+  links go in each doc's `tracker:` frontmatter list, not here.)
 
 Write `.waymark.yml`.
 

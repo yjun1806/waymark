@@ -21,13 +21,13 @@
    - Each folder's index.md is auto-generated — never hand-edit it.
 -->
 ---
-id: <id>                    # JIRA-123 (tracker) or YJ-6 (.waymark.yml roster: <prefix>-<seq>)
+id: <id>                    # exactly ONE. JIRA-123 (primary tracker) or YJ-6 (.waymark.yml roster: <prefix>-<seq>)
 title: <one-line title — the human name, in your team's language>
 summary: <one line — surfaced by the index (progressive disclosure)>
 assignee: <github-id — current owner, mutable, ≠ author>
 target: [<repo/app>, ...]   # codebases this touches (list, multi-repo OK)
-planning: "<link to planning source (Confluence/Notion). Reference only, never copy. Omit if infra.>"
-tracker: "<link to the tracker issue. Complement, not mirror. Omit if none.>"
+planning: "<planning-source link (Confluence/Notion/PDF). Reference only, never copy. Omit if none/infra.>"
+tracker: ["<tracker issue link — Jira/Linear/GitHub/…>"]   # complement, not mirror (§3). Multiple OK. Omit or [] if none.
 ---
 
 # <id> · <title>
