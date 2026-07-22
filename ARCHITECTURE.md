@@ -117,6 +117,24 @@ waymark/
   → **The folder qualification test**: does work *dwell* there + *wait on another
   actor* + *possibly bounce back*? All three → folder; otherwise → gate.
 
+### Why a folder, not a field (path-native)
+
+Put status **in the file** (a frontmatter `status:`) and an agent has to **read** the file to
+learn its status. A grep hit inside a `done/` doc loads the whole file into context before the
+agent discovers it's legacy and discards it — pure waste. With folder = status, status is a
+**filesystem-level path fact**: `grep -r waymark/in-progress/` or `--exclude-dir=done` excludes
+it **without reading** (zero tokens).
+
+- `done/` is frozen and so **accumulates forever**, so the saving grows as legacy piles up (same
+  family as the §8 done-cache — drive the cost of accumulated `done/` toward zero).
+- Caveat: it only pays off if the agent actually scopes its search (a blanket `grep -r waymark/`
+  still reads `done/`). Path exclusion is trivial and cheap; content-based status filtering is
+  not — the structure makes the cheap path obvious, it doesn't force it.
+- Assumes path-based retrieval (grep/glob). Less relevant to a semantic index, but Claude Code's
+  dominant retrieval is path-based, so this matches the actual environment.
+
+In short: **status is a path, not content — so the agent filters without reading.**
+
 ### `git mv` = the governance log (the key win for agent-driven development)
 
 - The `git mv draft/ approved/` commit is an **immutable record with the content

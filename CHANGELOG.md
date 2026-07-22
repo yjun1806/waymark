@@ -3,6 +3,13 @@
 All notable changes to Waymark are recorded here. Versions follow semver —
 pre-1.0, breaking changes may land in a minor bump.
 
+## v0.2.3 — 2026-07-22
+
+- **Docs: path-native rationale for folder = status** — ARCHITECTURE §2 now records *why* status
+  lives in the folder path rather than a frontmatter field: an agent can exclude `done/` legacy by
+  path (`--exclude-dir=done`) without ever reading it into context — a token saving that grows as
+  `done/` accumulates. "Status is a path, not content." (EN + KO)
+
 ## v0.2.2 — 2026-07-22
 
 First-pass review fixes.
