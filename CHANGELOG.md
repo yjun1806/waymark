@@ -3,6 +3,13 @@
 All notable changes to Waymark are recorded here. Versions follow semver —
 pre-1.0, breaking changes may land in a minor bump.
 
+## v0.2.1 — 2026-07-22
+
+- **Fix: plugin load error** — removed the redundant `"hooks": "./hooks/hooks.json"` from
+  `plugin.json`. Claude Code auto-loads `hooks/hooks.json` from the standard location, so the
+  explicit manifest reference double-loaded it ("Duplicate hooks file detected"). The hook still
+  loads automatically.
+
 ## v0.2.0 — 2026-07-22
 
 - **`waymark-work` skill** — the new-issue flow (link gathering, id allocation, template

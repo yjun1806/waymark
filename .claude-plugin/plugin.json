@@ -1,7 +1,7 @@
 {
   "name": "waymark",
   "description": "Reference-don't-duplicate spec-driven development: one thin doc per issue that references external SSOT (planning, contract, tracker) instead of copying it, and freezes on done.",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "author": {
     "name": "Youngjun Kim",
     "url": "https://github.com/yjun1806"
@@ -10,6 +10,5 @@
   "repository": "https://github.com/yjun1806/waymark",
   "license": "MIT",
   "commands": "./commands",
-  "skills": "./skills",
-  "hooks": "./hooks/hooks.json"
+  "skills": "./skills"
 }
