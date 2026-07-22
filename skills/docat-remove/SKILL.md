@@ -14,7 +14,7 @@ Report what's present:
 - `docat/` folder (and roughly how many issue docs)
 - `.docat.yml` / `.docat.local.yml`
 - git hook: `.git/hooks/pre-commit` + `.git/hooks/docat-index.py` / `docat-check.py`
-- the rules block in `CLAUDE.md` between `<!-- docat:rules:start -->` and `<!-- docat:rules:end -->`
+- `docat/rules.md` + the import block in `CLAUDE.md` between `<!-- docat:start -->` and `<!-- docat:end -->`
 - `AGENTS.md` symlink → `CLAUDE.md`
 
 ## Step 2 — Ask the SCOPE (decides what gets deleted)
@@ -33,11 +33,11 @@ Confirm the choice. For **B**, confirm again explicitly and state exactly what w
 Delete `.git/hooks/pre-commit`, `.git/hooks/docat-index.py`, `.git/hooks/docat-check.py`
 (only if they are the Docat ones — check the pre-commit references docat).
 
-## Step 4 — Strip the ambient rules
+## Step 4 — Strip the workflow rules
 
-In `CLAUDE.md`, delete everything from `<!-- docat:rules:start -->` to `<!-- docat:rules:end -->`
-(inclusive). If `CLAUDE.md` is now empty, remove it. If `AGENTS.md` is a symlink to `CLAUDE.md`
-(created by Docat), remove the symlink.
+Delete `docat/rules.md`. In `CLAUDE.md`, remove the Docat import block between
+`<!-- docat:start -->` and `<!-- docat:end -->` (inclusive). If `CLAUDE.md` is now empty, remove
+it. If `AGENTS.md` is a symlink to `CLAUDE.md` (created by Docat), remove the symlink.
 
 ## Step 5 — Clean the gitignore
 

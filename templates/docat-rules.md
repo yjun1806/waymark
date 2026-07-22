@@ -1,4 +1,8 @@
-<!-- docat:rules:start — managed by Docat; `docat-remove` strips this whole block. Do not hand-edit. -->
+<!--
+  Docat workflow rules. `docat init` copies this to docat/rules.md and imports it into your
+  CLAUDE.md via `@docat/rules.md` (auto-loaded each session). Managed by Docat — `docat-remove`
+  deletes this file. Do not hand-edit.
+-->
 
 ## Docat workflow (this repo uses Docat)
 
@@ -21,6 +25,12 @@ should not have to invoke a command for each move. **Confirm the human-gated mov
 (draft→approved, and the final →done) with the user before doing them; the rest you may do
 automatically as the work progresses.
 
+### Keep issues small — split when they grow
+
+If an issue doc grows long (past roughly a screen or two), that is a signal the **issue itself
+is too big**. **Suggest splitting it into smaller issues** — link them with `supersedes` /
+`follows` — rather than letting one doc balloon. Length is a signal to split, not to fatten.
+
 ### Invariants (never violate)
 
 - **Folder = status** — never add a `status` field to a doc.
@@ -35,5 +45,3 @@ automatically as the work progresses.
 
 New substantive work → create `docat/draft/<id>-<slug>.md` from the template. Author
 `title`/`summary`/body in the team's `lang` (from `.docat.yml`); the filename `slug` is ASCII.
-
-<!-- docat:rules:end -->

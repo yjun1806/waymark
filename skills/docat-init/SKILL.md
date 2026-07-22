@@ -50,16 +50,25 @@ Write `.docat.yml`.
 Write `.docat.local.yml` with `paths: { <alias>: <local checkout path> }` (machine-specific),
 and append `.docat.local.yml` to `.gitignore` (never commit local paths).
 
-## Step 5 — Install the ambient workflow rules (this replaces a manual move command)
+## Step 5 — Install the workflow rules (reference, not inline)
 
-Append the Docat workflow rules to this repo's `CLAUDE.md` (create it if absent), copying from
-the plugin's `templates/docat-rules.md` (find it at `${CLAUDE_PLUGIN_ROOT}/templates/docat-rules.md`
-or under `~/.claude/plugins/*docat*/templates/`). Then make `AGENTS.md` a symlink (or copy) of
-`CLAUDE.md` for tool-neutrality. The block carries `docat:rules:start`/`docat:rules:end`
-markers so `docat-remove` can strip it cleanly later.
+The rules live in the docat data and are *referenced* from CLAUDE.md — Docat's own principle
+applied to itself. Do two things:
+
+1. Copy the plugin's `templates/docat-rules.md` to **`docat/rules.md`** in this repo (find the
+   template at `${CLAUDE_PLUGIN_ROOT}/templates/docat-rules.md` or under
+   `~/.claude/plugins/*docat*/templates/`).
+2. Add an import to this repo's `CLAUDE.md` (create if absent) so the rules auto-load every
+   session — a marked one-liner, **not** the whole block:
+
+       <!-- docat:start -->
+       @docat/rules.md
+       <!-- docat:end -->
+
+Make `AGENTS.md` a symlink (or copy) of `CLAUDE.md` for tool-neutrality.
 
 These rules make Claude follow the lifecycle and **move issue docs automatically** (`git mv`)
-as work progresses — the user never has to invoke a move command; human-gated moves are just
+as work progresses — the user never invokes a move command; human-gated moves are just
 confirmed first.
 
 ## Step 6 — Install the git gate
