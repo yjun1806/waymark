@@ -167,11 +167,6 @@ Generated docs (title · summary · body) are written in the team's **primary
 language** (`.waymark.yml` `lang`) — English for English teams, Korean for Korean
 teams. The filename **slug is always ASCII** (cross-OS git safety).
 
-## Roadmap
-
-- [x] **v0.1** — the convention · `/work-new` · **ambient rules** (auto-move) · gates (`waymark-index`/`waymark-check`) · `waymark-init`·`waymark-remove` skills
-- [ ] **v0.2** — link liveness · code-symbol resolution · contract tests · index merge-driver · CI workflow
-
 ## Read more
 
 - [ARCHITECTURE.md](./ARCHITECTURE.md) — positioning (vs OpenSpec), folder model, id/schema, deployment modes, enforcement — all the design decisions.
