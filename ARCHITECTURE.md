@@ -1,389 +1,472 @@
-# Waymark — 설계 결정 (ARCHITECTURE)
+# Waymark — Design decisions (ARCHITECTURE)
 
-> 제품명 **Waymark**. "왜"와 철학은 [README.md](./README.md),
-> 이 문서는 **구체 설계 결정**을 담는다. 상태: v0.1 설계 중(WIP) — 결정이
-> 바뀌면 이 문서를 갱신한다.
+**English** · [한국어](./ARCHITECTURE.ko.md)
+
+> Product: **Waymark**. The "why" and philosophy live in [README.md](./README.md);
+> this doc holds the **concrete design decisions**. Status: v0.1, design in progress
+> (WIP) — updated as decisions change.
 
 ---
 
-## 0. 포지셔닝 — vs OpenSpec (무엇을 포기하고 무엇을 얻나)
+## 0. Positioning — vs OpenSpec (what we give up, what we gain)
 
-가장 가까운 이웃은 **OpenSpec**이다. change→archive 생명주기, 위성 레포(Stores),
-델타, brownfield, 얇은 md — 상당 부분 수렴한다. OpenSpec은 **성숙하고 인기 있으며,
-그럴 만한 진짜 이유가 있다.** Waymark이 OpenSpec보다 "낫다"는 게 아니라, **다른
-트레이드오프**를 택한 것이다.
+The closest neighbor is **OpenSpec**. The change→archive lifecycle, satellite repos
+(Stores), deltas, brownfield support, thin markdown — we converge on much of it.
+OpenSpec is **mature, popular, and for genuinely good reasons.** Waymark is not
+"better" than OpenSpec — it picks a **different trade-off**.
 
-**핵심 대칭**:
+**The core symmetry**:
 
-> **OpenSpec은 유지비/드리프트를 감수하고 → repo 안에 읽을 수 있는 현재상태 spec을
-> 얻는다. Waymark은 그 spec을 포기하고 → 유지비와 권위 드리프트를 없앤다(내용 드리프트는
-> §9 게이트로 최소화). 어느 쪽도 절대 우월이 아니다 — 팀 상황에 따라 무엇을 포기하고
-> 무엇을 얻을지 고르는 문제다.**
+> **OpenSpec accepts maintenance cost and drift → and gains a readable current-state
+> spec inside the repo. Waymark gives up that spec → and eliminates the maintenance
+> cost and authority drift (content drift is minimized by the §9 gates). Neither side
+> is absolutely superior — it's a question of what your team chooses to give up and
+> what it chooses to gain.**
 
-**OpenSpec의 진짜 강점** (Waymark이 포기한 것):
-- **읽을 수 있는 현재상태 spec** — 신규자가 코드를 다 안 읽고 "시스템이 뭘 하나"를
-  산문으로 파악. 많은 팀에게 "코드 읽어라"는 그 질문의 답이 아니다.
-- **자기완결·단순** — repo 하나로 끝, 외부 SSOT·분산 인스턴스 불필요. 단순함이 곧 채택률.
-- **repo 안 합의(spec-as-contract)** — 상류 기획 규율이 약한 팀에 "코드 전 합의"를 강제.
-- **성숙·생태계** — 실제 출시·유지·다중 에이전트. Waymark은 아직 설계 단계다.
+**OpenSpec's real strengths** (what Waymark gives up):
+- **A readable current-state spec** — a newcomer learns "what does this system do"
+  from prose without reading all the code. For many teams, "go read the code" is not
+  an answer to that question.
+- **Self-contained and simple** — one repo is all you need; no external SSOT, no
+  distributed instances. Simplicity is adoption.
+- **In-repo agreement (spec-as-contract)** — forces "agree before code" on teams with
+  weak upstream planning discipline.
+- **Maturity and ecosystem** — actually shipped, maintained, multi-agent. Waymark is
+  still at the design stage.
 
-**Waymark의 베팅** (OpenSpec이 감수하는 것):
-- **권위 드리프트 부담 0** — 유지되는 현재상태 spec을 안 만드니 그게 낡을 일이 없다(매일
-  갱신·캐스케이드 없음, §7). *내용* 드리프트(발췌 stale·계약 불일치)는 없애는 게 아니라
-  게이트로 최소화한다(§9).
-- **두 번째 진실 원천 없음** — 기획이 이미 밖(Confluence)에 있으면 복제하지 않는다.
-- **트래커 보완**(§3) · **계약=코드** · **CI 강제**(§9).
+**Waymark's bet** (what OpenSpec pays for):
+- **Zero authority-drift burden** — we never build a maintained current-state spec,
+  so there is nothing to go stale (no daily updates, no cascades, §7). *Content*
+  drift (stale excerpts, contract mismatches) is not eliminated — it is minimized by
+  gates (§9).
+- **No second source of truth** — if planning already lives outside (Confluence), we
+  don't duplicate it.
+- **Tracker complement** (§3) · **contract = code** · **CI enforcement** (§9).
 
-| 축 | OpenSpec | Waymark |
+| Axis | OpenSpec | Waymark |
 |---|---|---|
-| 현재상태 spec | **읽을 수 있게 유지**(강점) | 유지 안 함 — 드리프트 0, 대신 §7로 파생 |
-| 외부 SSOT | 불필요(자기완결·단순) | **전제** — 있으면 참조, 없으면 문서가 시점 SSOT |
-| 요구사항 | `specs/`에 재서술 | 참조 / 시점 기록 |
-| 파일/이슈 | 4개(proposal/specs/design/tasks) | 1개 융합 |
-| 폴더=상태 | 이진(active/archive) | 4단계 + 승인 게이트(§2) |
-| 트래커 | 통합 없음(단순) | 보완(미러 금지, §3) |
-| CI 강제 | 없음 | ref/contract/id 게이트(§9) |
-| 성숙도 | **출시·검증됨** | 설계 단계 |
+| Current-state spec | **Kept readable** (strength) | Not maintained — zero drift; derived via §7 instead |
+| External SSOT | Not needed (self-contained, simple) | **Assumed** — reference it if present; otherwise the doc is the point-in-time SSOT |
+| Requirements | Restated in `specs/` | Referenced / recorded point-in-time |
+| Files per issue | 4 (proposal/specs/design/tasks) | 1, fused |
+| Folder = status | Binary (active/archive) | 4 stages + approval gate (§2) |
+| Tracker | No integration (simple) | Complement (mirroring forbidden, §3) |
+| CI enforcement | None | ref/contract/id gates (§9) |
+| Maturity | **Shipped, proven** | Design stage |
 
-**언제 OpenSpec을 고르나**: 외부 SSOT가 없다 · repo 안에서 읽을 수 있는 현재상태
-문서를 원한다 · 상류 기획 규율이 약해 repo 안 합의가 필요하다 · 단순함·성숙함이 우선.
+**When to pick OpenSpec**: no external SSOT · you want a readable current-state
+document inside the repo · upstream planning discipline is weak and you need in-repo
+agreement · simplicity and maturity come first.
 
-**언제 Waymark을 고르나**: 기획 SSOT가 이미 밖에 두껍다(두 번째 원천을 만들기 싫다) ·
-드리프트 극혐 + 트래커 보완 문화 · 계약=코드 문화.
+**When to pick Waymark**: your planning SSOT is already thick and lives outside (you
+refuse to mint a second source) · you loathe drift and have a tracker-complement
+culture · contract-equals-code culture.
 
-**OpenSpec에서 훔칠 것**(재발명 금지): propose/archive UX, 델타 사고, Stores(위성)
-패턴, 다중 에이전트 지원 구조. 이 뼈대를 빌리되 **"spec 유지" 코어만 뺀다** — 그게
-Waymark의 유일한 근본 차이다.
+**What to steal from OpenSpec** (no reinventing): the propose/archive UX, delta
+thinking, the Stores (satellite) pattern, the multi-agent support structure. Borrow
+that skeleton but **remove only the "maintain the spec" core** — that is Waymark's
+single fundamental difference.
 
-### 계보 — 새로 만든 게 아니다
+### Lineage — not a new invention
 
-Waymark은 발명이 아니라 **검증된 세 아이디어를 한데 맞춘 규약**이다: OpenSpec의
-change→archive 생명주기, 단일 서사 문서가 재서술 대신 참조하는 ADR/설계문서 전통,
-트래커를 **보완**(미러 아님)하는 폴더=상태 워크플로우. 이 셋을 "외부 SSOT가 이미 있는"
-경우에 맞게 묶었을 뿐 — 그 조합을 정면으로 겨냥한 프레임워크가 없었다.
+Waymark is not an invention but **a convention that fits three proven ideas
+together**: OpenSpec's change→archive lifecycle, the ADR/design-doc tradition of a
+single narrative document that references instead of restating, and a
+folder-as-status workflow that **complements** (never mirrors) the tracker. We merely
+bound these three to the "an external SSOT already exists" case — no framework had
+aimed squarely at that combination.
 
-## 1. 핵심 모델
+## 1. Core model
 
-- **이슈 1개 = 파일 1개.** 한 파일에 *왜(why) · 어떻게(how) · 무엇(what) · 결정*을
-  모두 담는다. spec/plan/task를 여러 파일로 쪼개지 않는다.
-- Waymark은 "프레임워크"가 아니라 **얇은 규약 + 강제 훅 + 스킬**이다.
+- **One issue = one file.** A single file holds *why · how · what · decisions*. We do
+  not split spec/plan/task across multiple files.
+- Waymark is not a "framework" — it is **a thin convention + enforcing hooks +
+  skills**.
 
-### HOW→WHAT 유출 규칙 (문서가 소유하는 건 how뿐)
+### The HOW→WHAT leak rule (the doc owns only the how)
 
-기획이 불완전하면, `Decisions`에 적은 결정이 원천에 없던 **WHAT의 유일한 출처**가 되어버릴
-수 있다(예: "중복가입 → 409"). 그 문서가 `done`에서 동결되면, "현재를 서술하지 않는다"고
-명시한 기록 안에 그 WHAT이 화석화된다. 그래서 규칙이 하나 붙는다 — **기획 공백을 메우는
-결정은 동결 전에 상류(기획소스)로 백포트**하거나 최소한 트래커/기획에 플래그한다. 안 그러면
-Waymark이 자기 탈출구(deviation 로그)로 금지한 두 번째 진실 원천을 만들어낸 셈이 된다.
+When planning is incomplete, a decision written under `Decisions` can become the
+**only home of a WHAT** that never existed in the source (e.g. "duplicate signup →
+409"). Once that doc freezes in `done`, that WHAT fossilizes inside a record that
+explicitly claims not to describe the present. So one rule attaches — **a decision
+that fills a planning gap must be backported upstream (to the planning source) before
+freeze**, or at minimum flagged in the tracker/planning doc. Otherwise Waymark has
+minted, through its own escape hatch (the deviation log), the very second source of
+truth it forbids.
 
-## 2. 폴더 = 상태 (핵심 결정)
+## 2. Folder = status (core decision)
 
 ```
 waymark/
-├── draft/           # 설계 중 (에이전트/사람이 문서 작성)
-├── approved/        # 👤 사람이 "해도되겠다" 승인 — 에이전트 착수 대기
-├── in-progress/     # 에이전트 빌드 중 = "지금 살아있는 것"(현재에 가장 가까움)
-└── done/            # 완료·배포 = 동결·불변 (archive 역할)
+├── draft/           # being designed (agent/human writing the doc)
+├── approved/        # 👤 a human said "good to go" — waiting for an agent to start
+├── in-progress/     # agent building = "what is alive right now" (closest to the present)
+└── done/            # completed & shipped = frozen, immutable (plays the archive role)
 ```
 
-- **파일이 있는 폴더가 곧 그 이슈의 상태다.** 이슈 1개 = 파일 1개가 폴더 사이를
-  **`git mv`로 이동**한다(복제 아님, 히스토리는 `--follow`로 이어짐). §1 참조.
-- **frontmatter에 `status` 필드를 두지 않는다** — 상태의 유일한 소스는 폴더.
-- **리뷰는 폴더가 아니라 게이트다.** 리뷰/테스트가 "스킬 실행"처럼 순간적이면
-  일이 머물지 않으므로 폴더 자격 미달 → `in-progress → done` **이동의 관문**으로
-  둔다(리뷰·테스트 통과해야 이동 — 단 위성 모드에서 이 게이트는 v0.1에서 사람 확인,
-  훅 강제는 v0.2 §9). 실제로 시간이 걸리고 되돌아오는
-  (bounce-back) QA 기간이 있으면 그때만 `verifying/` 폴더를 추가한다(YAGNI).
-  → **폴더 자격 시험**: 일이 *머무는가* + *다른 액터를 기다리는가* + *되돌아올 수
-  있는가*. 셋 다면 폴더, 아니면 게이트.
+- **The folder a file sits in is that issue's status.** One issue = one file that
+  **moves between folders via `git mv`** (no copying; history survives via
+  `--follow`). See §1.
+- **No `status` field in frontmatter** — the folder is the single source of status.
+- **Review is a gate, not a folder.** When review/testing is instantaneous like a
+  "skill run", work doesn't dwell there, so it fails the folder test → it becomes the
+  **gate on the `in-progress → done` move** (review and tests must pass to move —
+  though in satellite mode this gate is human confirmation in v0.1; hook enforcement
+  is v0.2, §9). Only if a real QA period exists — one that takes time and bounces
+  work back — do you add a `verifying/` folder, and only then (YAGNI).
+  → **The folder qualification test**: does work *dwell* there + *wait on another
+  actor* + *possibly bounce back*? All three → folder; otherwise → gate.
 
-### `git mv` = 거버넌스 로그 (에이전트 개발의 핵심 이점)
+### `git mv` = the governance log (the key win for agent-driven development)
 
-- `git mv draft/ approved/` 커밋 = **"사람이 이 설계(이 시점 문서 내용)를 승인했다"**는
-  **내용 스냅샷 박힌 불변 기록**. 에이전트가 승인된 설계로 지었다는 증거가 git에 남는다.
-  트래커의 상태변경(메타데이터, 내용 스냅샷 없음)은 이걸 못 준다.
-- 이동은 **에이전트 스킬이 자동 수행**(완료 시 이동)해 "잊어버린 mv"를 방지 — 사람
-  규율이 아니라 파이프라인의 일부.
+- The `git mv draft/ approved/` commit is an **immutable record with the content
+  snapshot baked in**: **"a human approved this design (the document as it stood at
+  that moment)."** Proof that the agent built from an approved design lives in git. A
+  tracker status change (metadata, no content snapshot) cannot give you that.
+- The move is **performed automatically by the agent skill** (move on completion),
+  preventing the "forgotten mv" — part of the pipeline, not human discipline.
 
-### 동결은 오직 `done`에서만
+### Freezing happens only in `done`
 
-- `draft`~`in-progress`의 문서는 **live** — 리뷰 중 변경사항이 문서에 그대로 반영된다.
-- `done`으로 이동 = **동결**. 이후 손대지 않는다.
-- 승인 후 중대 변경이 생기면 문서를 고치지 말고 **`approved`로 되돌려 재승인**.
-- **liveness 경계**: `done` 여부 하나뿐. 현재-상태 파생(§7)이 의존하는 유일한 경계.
+- Docs in `draft` through `in-progress` are **live** — changes during review land
+  directly in the document.
+- Moving to `done` = **freeze**. Never touched afterwards.
+- If a material change arises after approval, don't edit the doc — **move it back to
+  `approved` and re-approve**.
+- **The liveness boundary**: exactly one — `done` or not. The only boundary the
+  current-state derivation (§7) depends on.
 
-### 파일 정체성 = 경로가 아니라 `id`
+### File identity = `id`, not path
 
-- 파일이 폴더를 옮겨다니므로 툴/참조는 경로가 아니라 frontmatter **`id`로 추적**한다.
-  (rename/edit 머지 충돌 시에도 id가 안정적 식별자)
+- Because files move between folders, tools and references track the frontmatter
+  **`id`**, not the path. (The id stays a stable identifier even through rename/edit
+  merge conflicts.)
 
-### 파일명 · id 발급 · 설정(`.waymark.yml`)
+### Filename · id issuance · configuration (`.waymark.yml`)
 
-**경로**: `waymark/<status>/<id>-<slug>.md`  (예: `waymark/in-progress/YJ-6-party-signup.md`)
+**Path**: `waymark/<status>/<id>-<slug>.md`  (e.g. `waymark/in-progress/YJ-6-party-signup.md`)
 
-- **`<id>`** — 참조·커밋태그·`supersedes`는 항상 id로(파일명·경로 아님). **id는 언제나 정확히
-  하나** — 트래커 이슈를 여러 개 링크해도(§3) id는 그중 **primary 하나**(또는 prefix-seq)에서만
-  나오고, 나머지 링크는 `tracker` 리스트의 참조일 뿐 id가 아니다. 발급:
-  - **트래커 있음(주) + primary 지정**: primary 트래커 발급 id(`JIRA-123`) — 중앙에서 원자적, 유일.
-  - **트래커 없음 / primary 미지정 / 복수**: `.waymark.yml` 로스터의 **`<prefix>-<seq>`**(`YJ-6`). prefix는
-    github-id→코드 매핑(팀 내 유일), seq는 그 prefix 기존 파일 **max+1**(전 `waymark/**`
-    스캔, done 포함). **공유 순번 카운터 금지**.
-    - 팀 충돌 0(prefix 유일). 자기충돌(같은 사람 병렬 브랜치)은 조용한 중복 id를 낳으므로
-      **id-유일성 CI 게이트**가 잡는다(§9).
-    - prefix ≠ assignee: prefix는 **만든 사람 네임스페이스**(id에 박혀 불변),
-      assignee는 현재 책임자(가변). YJ-6이 재배정돼도 id는 YJ-6.
-- **`<slug>`** — **항상 ASCII**(kebab). 크로스-OS git 안전(mac NFD ↔ Linux NFC 문제 회피).
-- **사람 언어 = 설정 언어**: `title` · `summary` · 본문은 `.waymark.yml` `lang`로 생성 —
-  **영어권=영어, 한국 팀=한글**. slug만 ASCII, 나머지는 로컬 언어.
+- **`<id>`** — references, commit tags, and `supersedes` always use the id (never
+  filename or path). **The id is always exactly one** — even with multiple tracker
+  issues linked (§3), the id comes from only **one primary** among them (or from
+  prefix-seq); the remaining links are references in the `tracker` list, never the
+  id. Issuance:
+  - **Tracker present (primary designated)**: the primary tracker's issued id
+    (`JIRA-123`) — centrally atomic, unique.
+  - **No tracker / no primary designated / multiple**: **`<prefix>-<seq>`** from the
+    `.waymark.yml` roster (`YJ-6`). The prefix is a github-id→code mapping (unique
+    within the team); the seq is **max+1** over existing files with that prefix
+    (scanning all of `waymark/**`, including done). **No shared sequence counter.**
+    - Zero team collisions (prefix is unique). Self-collision (the same person on
+      parallel branches) yields silent duplicate ids, so the **id-uniqueness CI
+      gate** catches it (§9).
+    - prefix ≠ assignee: the prefix is the **creator's namespace** (baked into the
+      id, immutable); the assignee is the current owner (mutable). If YJ-6 is
+      reassigned, the id is still YJ-6.
+- **`<slug>`** — **always ASCII** (kebab). Cross-OS git safety (avoids the mac NFD ↔
+  Linux NFC problem).
+- **Human language = configured language**: `title` · `summary` · body are generated
+  in the `.waymark.yml` `lang` — **English teams get English, Korean teams get
+  Korean**. Only the slug is ASCII; everything else is the local language.
 
-**`.waymark.yml`** (팀이 미리 세팅, git 공유):
+**`.waymark.yml`** (set up by the team in advance, shared via git):
 
 ```yaml
-lang: ko                 # 생성 문서 언어(title/summary/본문). slug은 항상 ASCII
-repos:                   # 관리 대상 레포 (위성 모드 §12). alias → remote(이식가능)
+lang: ko                 # language of generated docs (title/summary/body). Slug is always ASCII
+repos:                   # managed repos (satellite mode §12). alias → remote (portable)
   backend: { remote: github.com/myteam/backend }
   app:     { remote: github.com/myteam/app }
-assignees:               # github-id → prefix (트래커 없을 때 id 발급)
-  younjun-kim: YJ        # prefix는 팀 내 유일
+assignees:               # github-id → prefix (id issuance when there's no tracker)
+  younjun-kim: YJ        # prefix is unique within the team
   minsu-kim:   KM
-# tracker_type: jira      # (옵션) 팀이 쓰는 트래커 종류. 설정 시 id는 primary 트래커 발급, prefix 로스터 불필요
-# 로컬 경로는 .waymark.local.yml(gitignore)에 분리 — §12
+# tracker_type: jira      # (optional) the team's tracker. When set, ids come from the primary tracker; no prefix roster needed
+# Local paths live in .waymark.local.yml (gitignored) — §12
 ```
 
-## 3. 소유 vs 참조 (소스별 진실 분담)
+## 3. Own vs reference (dividing truth by source)
 
-| 층 | 소유처 | 방식 |
+| Layer | Owner | Mechanism |
 |---|---|---|
-| 기획 (why/what) | Confluence/노션 | **참조**(링크) — 복제 금지 |
-| 데이터 계약 | 코드(schema/types/OpenAPI) | **참조** |
-| 프로젝트 트래커 (backlog/sprint/PM) | Jira/Linear | **참조**(`tracker:` 링크) — 보완, 미러 아님 |
-| **실행 상태** (draft→done) | **폴더** | repo가 소유 |
-| how · 결정 | **문서 본문** | 유일하게 문서가 소유 |
-| 담당자 | **frontmatter** | §5 |
+| Planning (why/what) | Confluence/Notion | **Reference** (link) — duplication forbidden |
+| Data contracts | Code (schema/types/OpenAPI) | **Reference** |
+| Project tracker (backlog/sprint/PM) | Jira/Linear | **Reference** (`tracker:` links) — complement, not mirror |
+| **Execution status** (draft→done) | **Folder** | Owned by the repo |
+| How · decisions | **Document body** | The only thing the doc owns |
+| Assignee | **frontmatter** | §5 |
 
-### 트래커 보완 — 대체가 아니다 (미러 금지 규칙)
+### Tracker complement — not a replacement (the no-mirror rule)
 
-Waymark은 Jira/Linear를 **대체하지 않고 보완**한다. 둘은 **다른 축**이다:
+Waymark **complements Jira/Linear, it does not replace them**. They are **different
+axes**:
 
-- **트래커** = 무엇/누가/언제 + **관리·조직 상태**(backlog/sprint/review/QA/…). PM·조직·비개발자용.
-- **Waymark 폴더** = 설계+how + **에이전트 실행 파이프라인**(draft→approved→in-progress→done).
-  에이전트·개발자용.
+- **Tracker** = what/who/when + **management and organizational status**
+  (backlog/sprint/review/QA/…). For PMs, the org, non-developers.
+- **Waymark folders** = design + how + **the agent execution pipeline**
+  (draft→approved→in-progress→done). For agents and developers.
 
-축이 다르므로 **1:1 대응이 성립하지 않는다** — 트래커가 7단계로 더 잘게 쪼갠 워크플로우를
-쓰더라도 그건 *관리 상태* 축이고, Waymark 4폴더는 *에이전트 착수·빌드·완료* 축이다. 한쪽이
-다른 쪽보다 "더 미세"한 게 아니라 **재는 대상이 다르다** → 동기화 강박 불필요, 거친 단방향
-넛지만 둔다(Waymark `done` → 트래커 `Done`).
+Because the axes differ, **no 1:1 mapping exists** — even if the tracker uses a
+seven-stage, finer-grained workflow, that is the *management status* axis, while
+Waymark's four folders are the *agent start/build/finish* axis. Neither side is "more
+fine-grained" than the other; **they measure different things** → no sync compulsion,
+just one coarse one-way nudge (Waymark `done` → tracker `Done`).
 
-**링크는 여러 개 가능** (`tracker`는 리스트, §4): 한 작업 단위가 여러 티켓에 걸치면(백엔드+
-프론트 티켓, 크로스툴) 다 링크한다. 그 경우 `done` 넛지도 링크 수만큼 **팬아웃**한다. 다만
-링크가 자꾸 많아지면 "이슈가 너무 크다 → `supersedes`/`follows`로 분리" 신호일 수 있다(§8).
+**Multiple links are fine** (`tracker` is a list, §4): when one unit of work spans
+several tickets (backend + frontend tickets, cross-tool), link them all. In that case
+the `done` nudge **fans out** to every link. But links piling up can be a smell —
+"the issue is too big → split via `supersedes`/`follows`" (§8).
 
-> **불변 규칙**: Waymark 폴더와 트래커 상태는 **다른 축**이다 — 서로 미러하지 않는다.
-> 폴더를 트래커 단계와 1:1로 맞추려는(미러) 순간 이중소스 드리프트가 부활한다. 트래커가
-> 아무리 잘게 쪼개도 Waymark은 폴더 수(4)를 늘려 따라가지 않는다(세부는 `sub-status`, §10-3).
+> **Invariant**: Waymark folders and tracker status are **different axes** — they
+> never mirror each other. The moment you try to map folders 1:1 onto tracker stages
+> (mirroring), dual-source drift is resurrected. No matter how finely the tracker
+> slices, Waymark does not grow its folder count (4) to keep up (details go in
+> `sub-status`, §10-3).
 
-## 4. frontmatter 스키마
+## 4. frontmatter schema
 
 ```yaml
 ---
 id: X-57
-title: 파티 개설·정원 동시성
-summary: 파티 개설·신청·수락 + 정원 동시성 제어   # 한 줄 — index가 노출(progressive disclosure §8-⑦)
-assignee: younjun               # 현재 책임자 (가변, ≠ author)
-target: [backend, app]          # .waymark.yml repos alias — 건드리는 코드베이스(멀티레포 OK, §12)
-planning: "https://…/notion"    # 기획 원천 링크 — 참조만, 복제 금지. 없으면 생략
-tracker: ["https://…/JIRA-123", "https://…/LIN-45"]   # 트래커 이슈 링크(들) — 보완·미러 아님(§3). 여러 개 OK, 없으면 [] 또는 생략
+title: Party creation · capacity concurrency
+summary: Party creation, signup, acceptance + capacity concurrency control   # one line — surfaced by the index (progressive disclosure §8-⑦)
+assignee: younjun               # current owner (mutable, ≠ author)
+target: [backend, app]          # .waymark.yml repos aliases — the codebases touched (multi-repo OK, §12)
+planning: "https://…/notion"    # planning source link — reference only, never duplicated. Omit if none
+tracker: ["https://…/JIRA-123", "https://…/LIN-45"]   # tracker issue link(s) — complement, not mirror (§3). Multiple OK; [] or omit if none
 ---
 ```
 
-- **`tracker`는 리스트** — 한 작업 단위가 여러 티켓에 걸치면(풀스택=백엔드+프론트 티켓,
-  크로스툴) 링크를 여럿 담는다. 파싱 안정을 위해 **인라인 리스트**(`["a","b"]`)로 쓴다.
-  링크는 **참조일 뿐 id가 아니다**(id는 §2대로 하나).
+- **`tracker` is a list** — when one unit of work spans several tickets (full-stack =
+  backend + frontend tickets, cross-tool), it holds multiple links. For parsing
+  stability, write it as an **inline list** (`["a","b"]`). The links are **references
+  only, not the id** (the id is one, per §2).
 
-- `status` · `author` · `updated`는 **손으로 쓰지 않는다** — 각각 폴더 · git ·
-  git에서 파생.
-- `target`은 **리스트** — 멀티레포/풀스택 작업은 문서가 범위를 정의하고 그 기준으로
-  진행한다(co-location 불필요, §11).
-- 헤딩(본문 4섹션)은 verbatim·순서 고정(훅/인덱스 파싱이 의존).
+- `status` · `author` · `updated` are **never written by hand** — derived from the
+  folder, git, and git respectively.
+- `target` is a **list** — for multi-repo/full-stack work, the document defines the
+  scope and the work proceeds against it (no co-location needed, §11).
+- Headings (the 4 body sections) are verbatim, fixed order (hook/index parsing
+  depends on it).
 
-## 5. 담당자(assignee) vs 작성자(author)
+## 5. Assignee vs author
 
-- **`assignee`** = 지금 책임자. **가변**(핸드오프로 바뀜). → frontmatter 명시.
-  "누가 이걸 지금 맡고 있나"의 유일한 답.
-- **author** = 만든 사람. **불변**. → **git이 이미 기록**(첫 커밋 author).
-  복제하지 않고 git 파생(또는 생성 시 1회 stamp, 인덱스 표시용).
+- **`assignee`** = who is responsible right now. **Mutable** (changes on handoff). →
+  Explicit in frontmatter. The single answer to "who owns this right now."
+- **author** = who created it. **Immutable**. → **Git already records it** (first
+  commit author). Not duplicated — derived from git (or stamped once at creation,
+  for index display).
 
-## 6. per-folder `index.md` (자동생성)
+## 6. Per-folder `index.md` (auto-generated)
 
-- 각 폴더에 `index.md`. 스크립트가 그 폴더 파일들의 frontmatter를 긁어
-  `id · title · summary · assignee · updated(git 파생)` 표를 생성(title/summary는 `lang` 언어).
-- **목적**: AI/사람이 파일을 다 안 읽고 **인덱스 하나로 빠르게 참조**.
-- `in-progress/index.md` = **현재 집중 뷰**(현재에 가장 가까운 작업 목록).
-- **손으로 수정 금지**(생성물). pre-commit 훅 또는 CI가 재생성.
+- Each folder has an `index.md`. A script scrapes the frontmatter of the folder's
+  files and generates a table of `id · title · summary · assignee · updated
+  (git-derived)` (title/summary in the `lang` language).
+- **Purpose**: AI and humans get a **fast reference from one index** without reading
+  every file.
+- `in-progress/index.md` = **the current-focus view** (the list of work closest to
+  the present).
+- **Never edit by hand** (it's a build product). A pre-commit hook or CI regenerates
+  it.
 
-## 7. 현재 상태는 "유지"가 아니라 "파생"한다 (git 모델)
+## 7. Current state is derived, not maintained (the git model)
 
-> ⚠️ **미검증 가설(v0.1)**: 이 파생 모델은 Waymark의 가장 참신한 주장이자 **가장 미완인
-> 부분**이다. 두 전제에 의존한다 — (a) how를 바꾸는 거의 모든 변경이 이슈 문서를 거친다
-> (핫픽스·우회가 흔하면 커버리지가 깨져 파생이 조용히 틀린다), (b) `supersedes` 체인을
-> 사람이 빠짐없이 명시한다(v0.1은 수동, Open Questions 참조). 둘 중 하나라도 깨지면
-> "현재 시스템이 뭘 하나"의 답은 §0에서 스스로 부족하다고 인정한 **"코드 읽어라"**로
-> 퇴화한다. 즉 이건 아직 **검증된 체계가 아니라 관점**이다 — 자동 겹침판정·커버리지
-> 계측은 v0.2 과제.
+> ⚠️ **Unverified hypothesis (v0.1)**: this derivation model is Waymark's most novel
+> claim and its **most unfinished part**. It rests on two premises — (a) nearly every
+> change to the how goes through an issue document (if hotfixes and workarounds are
+> common, coverage breaks and the derivation goes quietly wrong), and (b) humans name
+> `supersedes` chains exhaustively (manual in v0.1, see Open Questions). If either
+> breaks, the answer to "what does the current system do" degrades to the very **"go
+> read the code"** that §0 admits is inadequate. In other words this is still a
+> **perspective, not a proven system** — automatic overlap detection and coverage
+> instrumentation are v0.2 work.
 
-- `done/` = **동결 히스토리**(git 커밋처럼 불변, 손대지 않음).
-- "현재 상태" 문서를 **유지하지 않는다** — git이 현재 스냅샷 문서를 유지하지 않는
-  것과 같은 이유로. live 소스는 **코드(as-built) + 기획(as-intended) + in-progress**.
-- area별 "현재 how" = 관련 이슈들을 **누적(union)** → `supersedes`로 죽은 것 제거
-  → **recency 정렬**(git blame처럼 최근이 충돌 시 승).
-- **함정**: recency만으론 틀림. 안 겹치는 옛 이슈는 여전히 유효 → 반드시 **누적 후**
-  같은 대상을 건드린 것만 최신이 이긴다. (겹침 자동판정은 v0.2, 우선은 `supersedes` 명시)
+- `done/` = **frozen history** (immutable like git commits, never touched).
+- We **do not maintain** a "current state" document — for the same reason git doesn't
+  maintain a current-snapshot document. The live sources are **code (as-built) +
+  planning (as-intended) + in-progress**.
+- The "current how" per area = **accumulate (union)** the related issues → remove the
+  dead ones via `supersedes` → **sort by recency** (like git blame, the most recent
+  wins on conflict).
+- **The trap**: recency alone is wrong. Old issues that don't overlap are still valid
+  → you must **accumulate first**, then let recency win only among issues touching
+  the same target. (Automatic overlap detection is v0.2; for now, explicit
+  `supersedes`.)
 
-## 8. 단점 & 극복 — fatten 금지, generate/gate
+## 8. Weaknesses & mitigations — never fatten; generate/gate
 
-문서를 살찌우면(Spec Kit식 7파일) 다시 드리프트한다. 극복은 **재계산되는 산출물 +
-CI 게이트**로 — 원리적으로 드리프트 못 하는 것들.
+Fatten the document (Spec Kit's 7 files) and drift returns. The mitigation is
+**recomputed artifacts + CI gates** — things that cannot drift by construction.
 
-> **읽는 법**: 아래 "극복"의 상당수는 **v0.2 로드맵**이다. 단점은 현재형이지만 극복은
-> 시점을 구분해서 읽어라 — 오늘 실제로 있는 건 🟢, 아직 없는 건 🟡다.
+> **How to read this**: many of the "mitigations" below are **v0.2 roadmap**. The
+> weaknesses are present tense, but read the mitigations with their timing — what
+> actually exists today is 🟢, what doesn't yet is 🟡.
 
-| 단점 | 극복 | 형태 | 상태 |
+| Weakness | Mitigation | Form | Status |
 |---|---|---|---|
-| ① 현재 상태 맵 없음 | area/thread 맵 **자동생성**(내용 아닌 포인터) | `area-map-gen` | 🟡 v0.2 |
-| ② 참조 링크 썩음 | **ref-integrity gate**(CI가 링크 resolve 검사, 코드참조는 심볼/앵커) | `ref-integrity-gate` | 🟡 v0.2 |
-| ③ 자기완결성 상실(에이전트) | 링크 옆 **dated excerpt**(날짜 박힌 발췌, 갱신 금지·착수 시 re-fetch) | 템플릿 규칙 + `/work-new` fetch | 🟢 v0.1 |
-| ④ 후속 파편화 | `supersedes`/`follows` **스레드** + area 맵 스티칭 | frontmatter + `area-map-gen` | 🟡 스레드=수동(v0.1) / 맵=v0.2 |
-| ⑤ 계약 강제의 역설 | 스키마 복제 대신 **테스트를 참조**, 게이트가 실행(executable spec) | `contract-drift-gate` | 🟡 v0.2 |
-| ⑥ 상태 이중기록 | **폴더=상태로 해결됨**(§2) — 단일 소스 | — | 🟢 v0.1 |
-| ⑦ 문서 길이 → 읽기 토큰 | **progressive disclosure** — index로 걸러 필요한 섹션만 | index `summary` + verbatim 헤딩 | 🟢 v0.1 |
+| ① No current-state map | Area/thread map **auto-generated** (pointers, not content) | `area-map-gen` | 🟡 v0.2 |
+| ② Reference links rot | **ref-integrity gate** (CI resolves links; code refs by symbol/anchor) | `ref-integrity-gate` | 🟡 v0.2 |
+| ③ Lost self-containment (agents) | **Dated excerpt** next to the link (date-stamped, never updated, re-fetched on start) | template rule + `/work-new` fetch | 🟢 v0.1 |
+| ④ Follow-up fragmentation | `supersedes`/`follows` **threads** + area-map stitching | frontmatter + `area-map-gen` | 🟡 threads = manual (v0.1) / map = v0.2 |
+| ⑤ Contract-enforcement paradox | **Reference tests** instead of duplicating schemas; gates execute them (executable spec) | `contract-drift-gate` | 🟡 v0.2 |
+| ⑥ Dual-recorded status | **Solved by folder = status** (§2) — single source | — | 🟢 v0.1 |
+| ⑦ Doc length → read tokens | **Progressive disclosure** — filter via the index, read only the needed sections | index `summary` + verbatim headings | 🟢 v0.1 |
 
-### ⑦ 문서 길이 / 읽기 토큰 — progressive disclosure
+### ⑦ Doc length / read tokens — progressive disclosure
 
-단일 융합 문서는 이미 Spec Kit 7파일 캐스케이드 대비 토큰 **절약**이다(§8 도입).
-진짜 비용은 "문서가 길다"가 아니라 **"안 필요한 걸 다 읽거나 반복해 읽는 것"**.
-해법은 쪼개는 게 아니라 3단 로딩:
+The single fused document is already a token **saving** versus Spec Kit's 7-file
+cascade (§8 intro). The real cost is not "the doc is long" but **"reading everything
+you don't need, or reading it repeatedly."** The fix is not splitting — it's
+three-tier loading:
 
-1. **index.md (대부분 여기서 끝)** — frontmatter `summary:` 한 줄을 인덱스가 노출.
-   "지금 뭐가 돌아가나"의 대부분은 문서를 안 열고 인덱스만으로 해결.
-2. **섹션 부분읽기** — verbatim·순서 고정 헤딩(§4)의 진짜 목적. 빌드 시 `## How`만
-   읽고 `## Decisions` 로그 전체는 안 읽는다(offset/limit). 전체 파일 로드 회피.
-3. **전체는 "왜 이렇게 됐지" 물을 때만**.
+1. **index.md (most reads end here)** — the index surfaces the one-line frontmatter
+   `summary:`. Most of "what's going on right now" is answered from the index alone,
+   without opening a document.
+2. **Partial section reads** — the real purpose of the verbatim, fixed-order headings
+   (§4). During a build, read only `## How` and skip the entire `## Decisions` log
+   (offset/limit). Avoids loading whole files.
+3. **The full doc only when asking "why did it end up like this."**
 
-**Hot/Cold 구조**: `How`+`Tasks`(hot, 얇게·위쪽) vs `Decisions`(cold, append-only).
-로그가 자라도 섹션 읽기라 hot 경로에 영향 없음. **multi-file 분할은 금지**(캐스케이드 부활).
+**Hot/Cold structure**: `How` + `Tasks` (hot, thin, near the top) vs `Decisions`
+(cold, append-only). The log can grow without touching the hot path, since reads are
+per-section. **Multi-file splitting is forbidden** (it resurrects the cascade).
 
-**길이 = 쪼개라 신호**: 이슈=기능1개라 문서는 유계. 2000줄로 부풀면 낭비가 아니라
-"이슈가 너무 크다"는 냄새 → `supersedes`/`follows`로 서브이슈 분할. 자기교정 압력.
+**Length = a split signal**: issue = one feature, so the doc is bounded. If it swells
+to 2000 lines, that's not waste — it's the smell of "this issue is too big" → split
+into sub-issues via `supersedes`/`follows`. Self-correcting pressure.
 
-**caching**: 한 세션 내 재읽기는 대체로 프롬프트 캐시로 완화(본질은 위 1~3).
+**Caching**: re-reads within a session are largely absorbed by prompt caching (the
+substance is tiers 1–3 above).
 
-## 9. 강제력 = 코드 (훅/게이트)
+## 9. Enforcement = code (hooks/gates)
 
-문서는 설득이고, **코드만 강제**한다. 훅 로드맵:
+Documents persuade; **only code enforces**. Hook roadmap:
 
-- `ref-integrity-gate` — 참조 링크/심볼 resolve 검사 + **id 유일성 검사**(자기충돌 방지) (차별점 ①)
-- `contract-drift-gate` — 계약 테스트 실행, 코드-문서 불일치 시 빌드 실패
-- `index/area-map 생성` — per-folder index + area 맵 자동생성
-- `index merge-driver` — index.md 충돌 시 재생성(§10)
+- `ref-integrity-gate` — resolves reference links/symbols + **id-uniqueness check**
+  (prevents self-collision) (differentiator ①)
+- `contract-drift-gate` — runs contract tests; build fails on code–doc mismatch
+- `index/area-map generation` — auto-generates per-folder indexes + the area map
+- `index merge-driver` — regenerates index.md on merge conflict (§10)
 
-**v0.1 우선순위**: `ref-integrity-gate`(id 유일성 포함) + `done 이동·동결` 부터
-(가장 차별적 + 가장 필요). 나머지는 v0.2.
+**v0.1 priority**: `ref-integrity-gate` (including id uniqueness) + the `done`
+move/freeze first (most differentiating + most needed). The rest is v0.2.
 
-### 오늘 강제되는 것 vs 설득에 머무는 것 (정직하게)
+### What code enforces today vs what stays persuasion (honestly)
 
-간판이 "문서는 설득, 코드만 강제"인 만큼 이 경계를 숨기지 않는다.
+With "documents persuade, only code enforces" on the sign, we don't hide this
+boundary.
 
-- **코드로 강제(오늘, v0.1)**: id 유일성 · 필수 frontmatter · verbatim 헤딩 · `done/`
-  동결 · index 재생성. pre-commit 훅이 Waymark 레포에서 실제로 막는다.
-- **아직 설득(에이전트 규율)**: 폴더 이동 판단, "material change" 여부, 발췌 stale 여부,
-  그리고 **`in-progress → done`의 "테스트 통과" 게이트**.
+- **Enforced by code (today, v0.1)**: id uniqueness · required frontmatter · verbatim
+  headings · the `done/` freeze · index regeneration. Pre-commit hooks actually block
+  these in the Waymark repo.
+- **Still persuasion (agent discipline)**: folder-move judgment, whether a change is
+  "material", whether an excerpt is stale, and **the "tests pass" gate on
+  `in-progress → done`**.
 
-특히 마지막 게이트는 **기본 모드(위성)에서 구조적 공백**이 있다 — pre-commit 훅은 *Waymark
-레포*에 사는데, 통과시켜야 할 테스트는 *대상 코드 레포*에서 돈다. 한 훅이 남의 레포
-테스트를 원자적으로 강제할 방법이 없다. 그래서 v0.1에서 "테스트 통과"는 **이동을 수행하는
-에이전트의 주장**이고, 실질 게이트는 **사람의 →done 승인 확인**(rules.md)이다. 교차 레포
-게이트(대상 레포 CI 상태를 Waymark 이동 조건으로 읽기)는 **v0.2 과제** — 그때까지 이 게이트는
-"코드 강제"가 아니라 "사람 확인"임을 명시한다.
+That last gate has a **structural gap in the default (satellite) mode** — the
+pre-commit hook lives in the *Waymark repo*, but the tests that must pass run in the
+*target code repo*. No single hook can atomically enforce another repo's tests. So in
+v0.1, "tests pass" is **the claim of the agent performing the move**, and the actual
+gate is **the human's →done approval confirmation** (rules.md). The cross-repo gate
+(reading the target repo's CI status as a condition for the Waymark move) is **v0.2
+work** — until then, we state explicitly that this gate is "human confirmation", not
+"code enforcement".
 
-## 10. 뾰족한 곳 & 해법
+## 10. Sharp edges & remedies
 
-1. **`index.md` 머지 충돌**(팀 작업 최대 리스크) — 생성물이라 여러 브랜치가 각자
-   재생성 → 머지 충돌. **해법**: `.gitattributes`에 **merge=regenerate 드라이버**
-   등록(충돌 나면 스크립트 재실행 = 정답). 커밋하되 자동해소.
-2. **트래커 스케일 천장** — Waymark 폴더는 미세 실행 상태만. 스프린트 보드·
-   크로스프로젝트·PM 뷰는 트래커가 담당. **해법**: §3 보완 모델 — `tracker:` 링크로
-   연결하되 **다른 해상도, 미러 금지**. (대체 아님이 처음부터 전제)
-3. **상태 확장(blocked·on-hold)** — 폴더 증식 위험. **해법**: 핵심 4폴더 고정
-   (draft·approved·in-progress·done), 세부는 frontmatter `sub-status`(폴더 아님).
-   리뷰는 폴더가 아니라 게이트(§2). 폴더는 liveness 경계만.
+1. **`index.md` merge conflicts** (the biggest team-work risk) — it's generated, so
+   multiple branches each regenerate it → merge conflicts. **Remedy**: register a
+   **merge=regenerate driver** in `.gitattributes` (on conflict, rerun the script =
+   the correct answer). Committed, but auto-resolved.
+2. **Tracker scale ceiling** — Waymark folders hold only fine-grained execution
+   state. Sprint boards, cross-project views, PM views belong to the tracker.
+   **Remedy**: the §3 complement model — connect via `tracker:` links but at a
+   **different resolution, never mirroring**. (Not-a-replacement was the premise from
+   the start.)
+3. **Status expansion (blocked · on-hold)** — folder-proliferation risk. **Remedy**:
+   the four core folders are fixed (draft · approved · in-progress · done); details
+   go in frontmatter `sub-status` (not a folder). Review is a gate, not a folder
+   (§2). Folders mark only the liveness boundary.
 
-## 11. 범위 / 전제
+## 11. Scope / assumptions
 
-- **타깃**: **개발자·에이전트 전용**. 비개발자(PM·디자이너)는 이 repo를 안 본다 —
-  그들은 트래커(Jira/Linear)를 쓴다(Waymark이 보완, §3).
-- **전제**: 에이전트 기반 개발 — 설계를 문서에 두고 → 사람 승인 → 에이전트 빌드 →
-  리뷰(변경 문서 반영) → 배포·완료. 폴더 전환이 이 파이프라인의 게이트.
-- **멀티레포 무관**: 이슈 문서가 작업 단위이고 `target` 리스트로 범위를 정의한다.
-  문서는 한 곳에 살고 N개 코드베이스를 참조 → co-location 불필요.
-- **비목표**: 트래커 **대체**(보완일 뿐), 실시간 협업 보드, 외부 통합, 비개발자 UI.
-- **비목표(중요)**: **문서 내용 품질·정합성, 개발/설계 방법론, 구현 방식**은 Waymark의 일이
-  아니다 — 전용 스킬(리뷰·TDD·설계·문서작성)에 위임한다. Waymark이 규약하는 건 *작업 단위의
-  관리 방식과 상태*(이슈=문서 1개, 폴더=상태, id·헤딩·동결)뿐. 게이트도 **구조**만 강제하고
-  내용의 좋고 나쁨은 판단하지 않는다.
+- **Audience**: **developers and agents only**. Non-developers (PMs, designers) never
+  look at this repo — they use the tracker (Jira/Linear), which Waymark complements
+  (§3).
+- **Assumption**: agent-driven development — design lives in a document → human
+  approval → agent build → review (changes land in the doc) → ship and complete.
+  Folder transitions are the gates of this pipeline.
+- **Multi-repo agnostic**: the issue document is the unit of work and the `target`
+  list defines its scope. The doc lives in one place and references N codebases →
+  no co-location needed.
+- **Non-goals**: **replacing** the tracker (complement only), a realtime
+  collaboration board, external integrations, non-developer UI.
+- **Non-goal (important)**: **document content quality/consistency, development and
+  design methodology, implementation style** are not Waymark's job — they are
+  delegated to dedicated skills (review, TDD, design, doc-writing). What Waymark
+  standardizes is only *how units of work are managed and their status* (issue = one
+  doc, folder = status, id · headings · freeze). The gates too enforce **structure**
+  only and pass no judgment on whether the content is good or bad.
 
-## 12. 배포 모델 — 위성(satellite) 기본, embedded 옵션
+## 12. Deployment model — satellite by default, embedded as an option
 
-Waymark 데이터(`waymark/`·`index.md`·`.waymark.yml`)가 어디 사는가. **플러그인 자체는
-전역 설치라 어느 레포도 오염하지 않는다** — 문제는 데이터 위치뿐.
+Where does the Waymark data (`waymark/` · `index.md` · `.waymark.yml`) live? **The
+plugin itself is installed globally and pollutes no repo** — the only question is
+data location.
 
-### 기본: 위성 — Waymark은 독립 레포, 대상 레포를 참조
+### Default: satellite — Waymark is an independent repo referencing the target repos
 
 ```
-myteam-backend/     ← 관리 대상 (Waymark 흔적 0)
-myteam-app/         ← 관리 대상
-~/waymark-yj/       ← Waymark 레포 (독립). waymark/ + .waymark.yml
+myteam-backend/     ← managed target (zero Waymark traces)
+myteam-app/         ← managed target
+~/waymark-yj/       ← the Waymark repo (independent). waymark/ + .waymark.yml
 ```
 
-- `.waymark.yml`의 **`repos:`** 가 관리 대상을 참조(alias → remote). **1개 아니어도 됨.**
-- 이슈 `target`·코드참조가 alias 사용: `backend:src/matching/scorer.ts#MatchScorer`.
-- **오염 0**(대상 레포는 Waymark을 모름) · **멀티레포 native** · **솔로/팀 통합**
-  (차이는 Waymark 레포를 private로 두냐 공용으로 두냐뿐).
+- **`repos:`** in `.waymark.yml` references the managed targets (alias → remote).
+  **Doesn't have to be just one.**
+- Issue `target` and code references use the aliases:
+  `backend:src/matching/scorer.ts#MatchScorer`.
+- **Zero pollution** (target repos don't know Waymark exists) · **multi-repo
+  native** · **solo/team unified** (the only difference is whether the Waymark repo
+  is private or shared).
 
-**로컬 경로 이식성**: `remote`는 공유·이식가능하나 로컬 체크아웃 경로는 기기별이라 분리:
+**Local path portability**: `remote` is shareable and portable, but local checkout
+paths differ per machine, so they're split out:
 
 ```yaml
-# .waymark.local.yml  (gitignore, 기기별)
+# .waymark.local.yml  (gitignored, per machine)
 paths:
   backend: ~/work/myteam-backend
   app:     ~/work/myteam-app
 ```
 
-게이트는 `repos.remote` + `paths`를 합쳐 코드참조를 resolve.
+Gates resolve code references by combining `repos.remote` + `paths`.
 
-**교차 레포 링크**: 코드 커밋(대상 레포)과 이슈 이동 커밋(Waymark 레포)이 분리되므로
-결합이 느슨함 → **이슈 id를 코드 커밋 메시지에**, **코드 SHA를 이슈 `Decisions`에** 상호 링크.
+**Cross-repo linking**: code commits (target repo) and issue-move commits (Waymark
+repo) are separate, so the coupling is loose → cross-link them: **the issue id in
+the code commit message**, **the code SHA in the issue's `Decisions`**.
 
-### 옵션: embedded — 단일 레포 팀이 "docs-with-code" 원할 때
+### Option: embedded — for single-repo teams that want docs-with-code
 
-`waymark/`를 코드 레포 안에 두어 같은 PR로 코드+문서를 함께 버전관리. `repos:` 불필요
-(자기 레포가 대상). co-location·원자적 커밋 이점, 단 그 레포 하나에만 묶임.
+Put `waymark/` inside the code repo so code + docs are versioned together in the same
+PR. No `repos:` needed (the repo is its own target). Gains co-location and atomic
+commits; the cost is being bound to that one repo.
 
-### 선택 기준
+### Choosing
 
-| 상황 | 모드 |
+| Situation | Mode |
 |---|---|
-| 솔로(팀 미도입) | **위성**(private Waymark 레포) — 대상 레포 오염 0 |
-| 멀티레포 | **위성** — 한 Waymark 레포가 N개 관리 |
-| 단일레포 + docs-with-code | embedded |
-| 팀 공용 추적 | 위성(공용 레포) 또는 embedded |
+| Solo (team hasn't adopted) | **Satellite** (private Waymark repo) — zero pollution of targets |
+| Multi-repo | **Satellite** — one Waymark repo manages N |
+| Single repo + docs-with-code | embedded |
+| Shared team tracking | Satellite (shared repo) or embedded |
 
-**솔로→팀 승격**: 위성 private → remote를 공용으로 바꾸거나, embedded로 옮김
-(`waymark/`를 코드 레포로 git mv).
+**Solo→team promotion**: satellite private → make the remote shared, or move to
+embedded (`git mv` the `waymark/` folder into the code repo).
 
 ---
 
-## Open Questions (미해결)
+## Open Questions (unresolved)
 
-- area/태그를 어떻게 정의할지 — 맵 생성 단위.
-- 겹침(supersede) 자동판정 방식 (v0.2). 우선은 `supersedes` 수동 명시.
-- `index` merge-driver 구체 구현.
+- How to define areas/tags — the unit of map generation.
+- Automatic overlap (supersede) detection (v0.2). For now, explicit manual
+  `supersedes`.
+- Concrete implementation of the `index` merge-driver.
