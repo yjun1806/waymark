@@ -70,9 +70,9 @@ Waymark은 **Claude Code 플러그인**이다. **Claude Code 세션**(터미널 
 
 Waymark 데이터(`waymark/` 폴더 + `.waymark.yml`)를 어디 두느냐. **`waymark init`이 셋업 때 물어본다.**
 
-- **satellite** (기본) — Waymark을 **독립 repo**에 두고, 관리 대상 코드 repo들을
-  `.waymark.yml`의 `repos:`로 **참조**한다(코드 repo는 안 건드림). 솔로·멀티레포·팀
-  미도입 상황에 적합.
+- **satellite** (기본) — Waymark을 **독립 repo**에 두고, 그 repo가 곧 **운영 허브**다:
+  에이전트를 *거기서* 실행해 관리 대상 코드 repo들을 읽고 편집한다(`.waymark.yml`의
+  `repos:`로 **참조** · 코드 repo는 안 건드림). 솔로·멀티레포·팀 미도입 상황에 적합.
 - **embedded** — 코드 repo **안에** `waymark/`를 둔다(docs-with-code). `repos:` 불필요.
   단일 repo에서 코드+문서를 같은 PR로 버전관리하고 싶을 때.
 

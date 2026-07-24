@@ -432,12 +432,19 @@ Where does the Waymark data (`waymark/` · `index.md` · `.waymark.yml`) live? *
 plugin itself is installed globally and pollutes no repo** — the only question is
 data location.
 
-### Default: satellite — Waymark is an independent repo referencing the target repos
+### Default: satellite — the Waymark repo is your operational hub
+
+The Waymark repo isn't a passive doc store off to the side — it's **where you work**.
+You open your agent (Claude Code, Codex, …) *in the Waymark repo*, and from there you
+plan, decide, and drive the code. The code repos are what the hub **reads and edits**;
+they carry no Waymark data. So the labels invert: the "satellite" is really the hub —
+the *Earth* — and the code repos orbit it. It's a clean **split between the
+issue-management repo and the code repos**.
 
 ```
-myteam-backend/     ← managed target (zero Waymark traces)
-myteam-app/         ← managed target
-~/waymark-yj/       ← the Waymark repo (independent). waymark/ + .waymark.yml
+myteam-backend/     ← code repo — read/edited from the hub (zero Waymark traces)
+myteam-app/         ← code repo
+~/waymark-yj/       ← the Waymark hub (independent). waymark/ + .waymark.yml — you work HERE
 ```
 
 - **`repos:`** in `.waymark.yml` references the managed targets (alias → remote).
@@ -459,6 +466,11 @@ paths:
 ```
 
 Gates resolve code references by combining `repos.remote` + `paths`.
+
+**Local hub↔code wiring** (per machine, gitignored): to make code navigable from
+inside the hub — and, optionally, to let a code repo point back to the hub — `waymark
+init` links them up from `paths`. Because the links are local-only, a fresh clone
+re-establishes them through init.
 
 **Cross-repo linking**: code commits (target repo) and issue-move commits (Waymark
 repo) are separate, so the coupling is loose → cross-link them: **the issue id in

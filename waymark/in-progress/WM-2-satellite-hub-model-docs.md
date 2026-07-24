@@ -37,10 +37,10 @@ tracker: []
 
 ## Tasks
 
-- [ ] T1 ARCHITECTURE satellite 절 개정 (en + ko)
-- [ ] T2 README 위성 모드 문단 개정 (en + ko)
-- [ ] T3 init Step 1 satellite 설명 개정
-- [ ] T4 WM-1/WM-3에서 이 절을 링크하도록 상호 참조 정리
+- [x] T1 ARCHITECTURE satellite 절 개정 (en + ko) — §12 "운영 허브"로, 로컬 배선 노트 추가
+- [x] T2 README 위성 모드 문단 개정 (en + ko)
+- [x] T3 init Step 1 satellite 설명 개정
+- [x] T4 상호 참조 — WM-3이 [[WM-2]] 링크, WM-1은 허브 맥락 포함. SSOT = ARCHITECTURE §12
 
 ## Decisions
 

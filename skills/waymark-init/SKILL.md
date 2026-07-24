@@ -18,8 +18,9 @@ enforcement lives in git hooks).
 
 Present the choice and ask which one:
 
-- **satellite** (recommended) — Waymark lives in its **own repo** and *references* the code repos
-  it manages (via `repos:`). The code repos are never touched. Best for solo, multi-repo, or
+- **satellite** (recommended) — Waymark lives in its **own repo**, which becomes your
+  **operational hub**: you run your agent *there* and it reads/edits the code repos it manages
+  (referenced via `repos:`). The code repos hold no Waymark data. Best for solo, multi-repo, or
   when the team hasn't adopted Waymark.
 - **embedded** — Waymark lives **inside this code repo** (docs-with-code). No `repos:` needed.
   Best for a single repo that wants code + docs in the same PR.

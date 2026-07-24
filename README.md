@@ -78,8 +78,9 @@ headings, and the index (`waymark/<status>/index.md`) is regenerated.
 Where Waymark's data (`waymark/` + `.waymark.yml`) lives. **`waymark init` asks at
 setup.**
 
-- **satellite** (default) — keep Waymark in its **own repo** and **reference** the
-  managed code repos via `repos:` in `.waymark.yml` (the code repos stay
+- **satellite** (default) — Waymark lives in its **own repo**, which is your
+  **operational hub**: you run your agent *there* and it reads/edits the managed
+  code repos (referenced via `repos:` in `.waymark.yml`; the code repos stay
   untouched). Fits solo, multi-repo, and teams not yet bought in.
 - **embedded** — put `waymark/` **inside** the code repo (docs-with-code). No
   `repos:` needed. For versioning code + docs in the same PR in a single repo.

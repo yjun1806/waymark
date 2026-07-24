@@ -356,12 +356,18 @@ CI 게이트**로 — 원리적으로 드리프트 못 하는 것들.
 Waymark 데이터(`waymark/`·`index.md`·`.waymark.yml`)가 어디 사는가. **플러그인 자체는
 전역 설치라 어느 레포도 오염하지 않는다** — 문제는 데이터 위치뿐.
 
-### 기본: 위성 — Waymark은 독립 레포, 대상 레포를 참조
+### 기본: 위성 — Waymark 레포가 곧 운영 허브
+
+Waymark 레포는 옆에 놓인 수동적 문서 창고가 아니라 **실제로 일하는 곳**이다. 에이전트
+(Claude Code, Codex, …)를 *Waymark 레포에서* 열고, 거기서 계획하고 결정하고 코드를 몬다.
+코드 레포는 허브가 **읽고 편집하는 대상**일 뿐, Waymark 데이터를 갖지 않는다. 그래서 이름이
+뒤집힌다 — "위성"이 실은 허브(*지구*)이고, 코드 레포들이 그 주위를 돈다. **이슈 관리 레포와
+코드 레포의 깔끔한 분리**다.
 
 ```
-myteam-backend/     ← 관리 대상 (Waymark 흔적 0)
-myteam-app/         ← 관리 대상
-~/waymark-yj/       ← Waymark 레포 (독립). waymark/ + .waymark.yml
+myteam-backend/     ← 코드 레포 — 허브에서 읽고 편집 (Waymark 흔적 0)
+myteam-app/         ← 코드 레포
+~/waymark-yj/       ← Waymark 허브 (독립). waymark/ + .waymark.yml — 여기서 작업
 ```
 
 - `.waymark.yml`의 **`repos:`** 가 관리 대상을 참조(alias → remote). **1개 아니어도 됨.**
@@ -379,6 +385,10 @@ paths:
 ```
 
 게이트는 `repos.remote` + `paths`를 합쳐 코드참조를 resolve.
+
+**로컬 허브↔코드 배선**(기기별, gitignore): 허브 안에서 코드를 탐색 가능하게 — 그리고
+선택적으로 코드 레포가 허브를 되가리키게 — `waymark init`이 `paths`로부터 연결한다. 이
+링크는 로컬 전용이라, 새로 clone하면 init으로 다시 세운다.
 
 **교차 레포 링크**: 코드 커밋(대상 레포)과 이슈 이동 커밋(Waymark 레포)이 분리되므로
 결합이 느슨함 → **이슈 id를 코드 커밋 메시지에**, **코드 SHA를 이슈 `Decisions`에** 상호 링크.
