@@ -1,0 +1,4 @@
+# Waymark 팀 설정 (embedded 모드 — 이 repo 안에서 코드+문서 함께 관리). git 공유.
+lang: ko
+assignees:
+  yjun1806: WM          # github-id → prefix (트래커 없을 때 id 발급: WM-1, WM-2 ...)
