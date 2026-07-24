@@ -47,3 +47,4 @@ tracker: []
 - D1 satellite 모델의 SSOT = `ARCHITECTURE` satellite 절. 다른 문서·이슈는 여기를 링크만.
 - D2 "위성/지구" 비유는 설명 보조로만 — 모드 이름(`satellite`)은 바꾸지 않는다(호환성·범위 최소화).
 - Open Q 모드 이름을 언젠가 재고할지(예: `hub`)는 별도 이슈로 — 지금은 설명만 개선.
+- 구현 커밋: `ccbf087` (ARCHITECTURE en/ko §12 · README en/ko · init Step 1).
